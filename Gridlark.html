@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gridlark Build Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=Atkinson+Hyperlegible+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a left-aligned newspaper page. Masthead across the top, a sticky index column on the left,
+   one reading column (about 70ch) on the right. Hairline rules, no cards, no gradients. */
+:root {
+  color-scheme: light;
+  /* Ink & Paper tokens, copied from app/src/main/java/com/gridlark/app/ui/theme/Theme.kt */
+  --paper: #F5F1E8;
+  --surface: #FFFCF5;
+  --sunken: #ECE6D9;
+  --rule: #D9D2C3;
+  --ink: #1C1B19;
+  --ink-muted: #5E5A52;
+  --ink-faint: #8E887C;
+  --accent: #E9A23B;
+  --on-accent: #1C1B19;
+  --accent-text: #9A5B0C;
+  --accent-wash: #F6E3C2;
+  --success: #2F6B4F;
+  --error: #B3412E;
+  /* Region palette: Paul Tol "light" + three extensions (Theme.kt RegionsLight) */
+  --r0:#77AADD; --r1:#EE8866; --r2:#EEDD88; --r3:#FFAABB; --r4:#99DDFF; --r5:#44BB99;
+  --r6:#BBCC33; --r7:#AAAA00; --r8:#DDDDDD; --r9:#C2A5CF; --r10:#E0C2A2; --r11:#9DB7AE;
+
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono: "Atkinson Hyperlegible Mono", Consolas, "Cascadia Mono", ui-monospace, Menlo, monospace;
+
+  --step--1: 0.84rem;
+  --step-0: 1.0rem;
+  --step-1: 1.2rem;
+  --step-2: 1.5rem;
+  --step-3: 2.1rem;
+  --step-4: clamp(2.6rem, 6vw, 4.2rem);
+  --measure: 70ch;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #161513; --surface: #1F1D1A; --sunken: #2A2723; --rule: #3A3631;
+    --ink: #EFEAE0; --ink-muted: #ADA79B; --ink-faint: #7A756B;
+    --accent: #F0B254; --on-accent: #161513; --accent-text: #F0B254; --accent-wash: #3A2E1B;
+    --success: #7FC29B; --error: #E88A73;
+    --r0:#6289B1; --r1:#BE6F54; --r2:#BEB16E; --r3:#CC8996; --r4:#7CB1CB; --r5:#3A967C;
+    --r6:#97A42C; --r7:#898904; --r8:#B1B1B1; --r9:#9C85A6; --r10:#B49C83; --r11:#7F938C;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #161513; --surface: #1F1D1A; --sunken: #2A2723; --rule: #3A3631;
+  --ink: #EFEAE0; --ink-muted: #ADA79B; --ink-faint: #7A756B;
+  --accent: #F0B254; --on-accent: #161513; --accent-text: #F0B254; --accent-wash: #3A2E1B;
+  --success: #7FC29B; --error: #E88A73;
+  --r0:#6289B1; --r1:#BE6F54; --r2:#BEB16E; --r3:#CC8996; --r4:#7CB1CB; --r5:#3A967C;
+  --r6:#97A42C; --r7:#898904; --r8:#B1B1B1; --r9:#9C85A6; --r10:#B49C83; --r11:#7F938C;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--step-0)/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.page { max-width: 1240px; margin: 0 auto; padding-inline: max(16px, 3vw); padding-block: 0 4rem; }
+
+a { color: var(--ink); text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--accent-text); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+::selection { background: var(--accent-wash); }
+
+/* ---------- Masthead ---------- */
+.masthead { padding-block: 2.2rem 0; display: grid; gap: .9rem; }
+.dateline { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font: 600 var(--step--1)/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.dateline b { color: var(--ink); font-weight: 700; }
+.wordmark { font: 600 var(--step-4)/0.95 var(--display); font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0; letter-spacing: -0.02em; margin: 0; }
+.wordmark .dot { color: var(--accent); }
+.standfirst { font: 400 var(--step-1)/1.45 var(--display); font-variation-settings: "opsz" 24; color: var(--ink-muted); max-width: 52ch; margin: 0; text-wrap: pretty; }
+.rule-double { border: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); height: 5px; margin: 1.4rem 0 0; }
+
+/* ---------- Page grid ---------- */
+.layout { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); gap: 3.2rem; margin-top: 2rem; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } }
+
+/* ---------- Index (TOC) ---------- */
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.2rem); align-self: start; max-height: calc(100vh - 2.4rem); overflow-y: auto; padding-right: .4rem; }
+.index h2 { font: 700 var(--step--1)/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 .7rem; }
+.index ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.index li { border-bottom: 1px solid var(--rule); }
+.index a { display: grid; grid-template-columns: 1.8rem 1fr; padding: .42rem 0; text-decoration: none; color: var(--ink-muted); font-size: .92rem; line-height: 1.3; }
+.index a span:first-child { font: 500 .8rem/1.6 var(--mono); color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.index a:hover { color: var(--ink); }
+.index a.active { color: var(--ink); font-weight: 700; }
+.index a.active span:first-child { color: var(--accent-text); }
+.index .legend { margin-top: 1.2rem; font-size: .8rem; color: var(--ink-muted); display: grid; gap: .35rem; }
+@media (max-width: 900px) {
+  .index { position: static; max-height: none; overflow: visible; }
+  .index ol { columns: 2; column-gap: 1.2rem; }
+  .index li { break-inside: avoid; }
+}
+@media (max-width: 480px) { .index ol { columns: 1; } }
+
+/* ---------- Article ---------- */
+main { min-width: 0; }
+section.chapter { padding-block: 2.6rem 1rem; border-top: 1px solid var(--ink); }
+section.chapter:first-child { border-top: 0; padding-top: 0; }
+.eyebrow { font: 700 var(--step--1)/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin: 0 0 .6rem; }
+h2.h { font: 600 var(--step-3)/1.1 var(--display); font-variation-settings: "opsz" 72, "SOFT" 50; letter-spacing: -0.01em; margin: 0 0 1rem; text-wrap: balance; max-width: 26ch; }
+h3 { font: 600 var(--step-1)/1.25 var(--display); font-variation-settings: "opsz" 24; margin: 2rem 0 .6rem; text-wrap: balance; }
+h4 { font: 700 var(--step-0)/1.3 var(--body); margin: 1.4rem 0 .4rem; }
+p, ul, ol, dl { max-width: var(--measure); }
+p { margin: 0 0 1rem; text-wrap: pretty; }
+ul, ol { padding-left: 1.25rem; margin: 0 0 1rem; }
+li { margin-bottom: .35rem; }
+li::marker { color: var(--ink-faint); }
+.lede { font: 400 var(--step-1)/1.5 var(--display); font-variation-settings: "opsz" 18; max-width: 62ch; }
+strong { font-weight: 700; }
+small, .fine { font-size: var(--step--1); color: var(--ink-muted); }
+code { font: 500 .88em/1.4 var(--mono); background: var(--sunken); padding: .08em .32em; border-radius: 3px; overflow-wrap: anywhere; }
+kbd { font: 500 .85em var(--mono); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 3px; padding: 0 .3em; background: var(--surface); }
+
+/* Status chips. Shape and words carry the meaning, not only colour. */
+.chip { display: inline-block; font: 700 .7rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; padding: .28em .5em .24em; border-radius: 3px; border: 1px solid currentColor; vertical-align: .12em; white-space: nowrap; }
+.chip.built { color: var(--success); }
+.chip.est { color: var(--accent-text); border-style: dashed; }
+.chip.plan { color: var(--ink-muted); border-style: dotted; }
+.chip.verify { color: var(--error); }
+
+/* Code blocks */
+.code { position: relative; margin: 0 0 1.2rem; max-width: 100%; }
+.code pre { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--ink); padding: .9rem 1rem; overflow-x: auto; font: 400 .86rem/1.55 var(--mono); color: var(--ink); tab-size: 2; }
+.code pre code { background: none; padding: 0; font: inherit; }
+.code .label { display: block; font: 700 .7rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: .35rem; }
+.copy { position: absolute; right: .45rem; bottom: .45rem; font: 700 .72rem/1 var(--body); letter-spacing: .04em; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); padding: .35rem .55rem; border-radius: 3px; cursor: pointer; }
+.copy:hover { border-color: var(--ink); }
+.c-com { color: var(--ink-faint); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 0 0 1.4rem; max-width: 100%; border-top: 2px solid var(--ink); }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .9rem .55rem 0; border-bottom: 1px solid var(--rule); }
+th { font: 700 .74rem/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.pick td { background: var(--accent-wash); }
+tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); padding-left: .6rem; }
+caption { caption-side: bottom; text-align: left; font-size: var(--step--1); color: var(--ink-muted); padding-top: .6rem; }
+td code { white-space: nowrap; }
+
+/* Notes and callouts: a marginal rule, not a card */
+.note { border-left: 3px solid var(--accent); padding: .2rem 0 .2rem 1rem; margin: 0 0 1.2rem; max-width: var(--measure); }
+.note p:last-child { margin-bottom: 0; }
+.note.warn { border-left-color: var(--error); }
+
+/* Games spread */
+.games { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 2.4rem; margin: 1.6rem 0 1rem; }
+@media (max-width: 1100px) { .games { grid-template-columns: minmax(0, 1fr); } }
+.game { display: grid; grid-template-columns: 8.5rem 1fr; gap: 1rem; align-items: start; border-top: 1px solid var(--rule); padding-top: 1rem; }
+@media (max-width: 420px) { .game { grid-template-columns: 1fr; } }
+.game h3 { margin: 0 0 .3rem; }
+.game p { font-size: .93rem; margin-bottom: .5rem; }
+.game .meta { font: 500 .78rem/1.4 var(--mono); color: var(--ink-muted); }
+.board { width: 100%; max-width: 8.5rem; height: auto; display: block; }
+.board .thin { stroke: var(--ink); stroke-opacity: .16; stroke-width: 1; }
+.board .thick { stroke: var(--ink); stroke-width: 2.2; stroke-linecap: square; }
+.board .frame { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.board .mark { fill: var(--ink); }
+.board .cross { fill: none; stroke: var(--ink); stroke-opacity: .6; stroke-width: 1.6; stroke-linecap: round; }
+.board .paperfill { fill: var(--surface); }
+.board .sun { fill: var(--accent); }
+.board .moon { fill: var(--ink-muted); }
+.board .sigbg { fill: var(--surface); stroke: var(--ink); stroke-opacity: .35; stroke-width: .8; }
+.board .sig { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+.board .trailline { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.board .dot { fill: var(--ink); }
+.board .dotnum { fill: var(--paper); font: 700 12px var(--body); text-anchor: middle; }
+.board .digit { fill: var(--ink); font: 500 15px var(--body); text-anchor: middle; }
+.r0{fill:var(--r0)} .r1{fill:var(--r1)} .r2{fill:var(--r2)} .r3{fill:var(--r3)} .r4{fill:var(--r4)} .r5{fill:var(--r5)}
+.r6{fill:var(--r6)} .r7{fill:var(--r7)} .r8{fill:var(--r8)} .r9{fill:var(--r9)} .r10{fill:var(--r10)} .r11{fill:var(--r11)}
+
+/* Figures and diagrams */
+figure { margin: 1.4rem 0 1.8rem; }
+figcaption { font-size: var(--step--1); color: var(--ink-muted); margin-top: .6rem; max-width: var(--measure); }
+.diagram { overflow-x: auto; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding-block: 1rem; }
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.dg-frame { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.dg-frame.dash { stroke-dasharray: 5 4; }
+.dg-box { fill: var(--surface); stroke: var(--ink); stroke-width: 1.2; }
+.dg-box.hot { fill: var(--accent-wash); stroke: var(--accent-text); }
+.dg-box.quiet { fill: var(--sunken); stroke: var(--rule); }
+.dg-sep { stroke: var(--rule); stroke-width: 1; }
+.dg-t { fill: var(--ink); font: 700 12.5px var(--body); }
+.dg-s { fill: var(--ink-muted); font: 400 11px var(--body); }
+.dg-m { fill: var(--ink-muted); font: 500 10.5px var(--mono); }
+.dg-big { fill: var(--ink); font: 600 15px var(--display); }
+.dg-lab { fill: var(--ink-muted); font: 700 10px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.dg-a { fill: none; stroke: var(--ink); stroke-width: 1.3; }
+.dg-ah { fill: var(--ink); }
+.dg-a.acc { stroke: var(--accent-text); }
+.dg-ah.acc { fill: var(--accent-text); }
+
+/* Swatches */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .9rem 1.2rem; margin: 1rem 0 1.4rem; }
+.sw { display: grid; grid-template-columns: 2.4rem 1fr; gap: .6rem; align-items: center; font-size: .82rem; line-height: 1.3; }
+.sw i { display: block; width: 2.4rem; height: 2.4rem; border: 1px solid var(--rule); border-radius: 3px; }
+.sw b { display: block; font-weight: 700; }
+.sw span { font: 500 .75rem var(--mono); color: var(--ink-muted); }
+.regions { display: flex; flex-wrap: wrap; gap: 0; margin: .4rem 0 1.4rem; border: 1.5px solid var(--ink); width: fit-content; max-width: 100%; }
+.regions i { width: 2.4rem; height: 2.4rem; display: grid; place-items: end start; font: 500 .62rem/1 var(--mono); color: #1C1B19; padding: 3px; border-right: 1px solid rgba(28,27,25,.15); }
+
+/* Type specimen */
+.specimen { display: grid; gap: .9rem; margin: 1rem 0 1.4rem; border-top: 1px solid var(--rule); padding-top: 1rem; }
+.specimen div { display: grid; grid-template-columns: 9rem 1fr; gap: 1rem; align-items: baseline; }
+@media (max-width: 520px) { .specimen div { grid-template-columns: 1fr; gap: .2rem; } }
+.specimen small { font: 500 .75rem/1.3 var(--mono); color: var(--ink-muted); }
+.sp-display { font: 600 2.2rem/1.1 var(--display); font-variation-settings: "opsz" 72, "SOFT" 50, "WONK" 0; }
+.sp-title { font: 500 1.35rem/1.2 var(--display); font-variation-settings: "opsz" 24, "SOFT" 50; }
+.sp-ui { font: 400 1.05rem/1.4 var(--body); }
+.sp-mono { font: 500 1.05rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Checklist */
+.checklist { list-style: none; padding: 0; max-width: var(--measure); border-top: 1px solid var(--rule); }
+.checklist > li { display: grid; grid-template-columns: 1.6rem 1fr; gap: .5rem; padding: .85rem 0; border-bottom: 1px solid var(--rule); margin: 0; }
+.checklist input { width: 1.1rem; height: 1.1rem; margin: .25rem 0 0; accent-color: var(--ink); }
+.checklist label { font-weight: 700; cursor: pointer; }
+.checklist .body { min-width: 0; }
+.checklist .body > *:last-child { margin-bottom: 0; }
+.checklist .body p, .checklist .body ul { margin: .35rem 0 .6rem; }
+.checklist li.done label { text-decoration: line-through; text-decoration-color: var(--ink-faint); color: var(--ink-muted); }
+.progress { font: 500 .8rem var(--mono); color: var(--ink-muted); margin: 0 0 .6rem; }
+
+/* Steps (a real sequence) */
+.steps { counter-reset: s; list-style: none; padding: 0; max-width: var(--measure); }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 2.2rem 1fr; gap: .6rem; margin: 0 0 1.3rem; }
+.steps > li::before { content: counter(s); font: 600 1.3rem/1.2 var(--display); color: var(--accent-text); }
+.steps > li > div { min-width: 0; }
+
+/* Listing kit */
+.listing { border-top: 1px solid var(--rule); max-width: var(--measure); }
+.field { padding: .9rem 0; border-bottom: 1px solid var(--rule); }
+.field header { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: .35rem; }
+.field header b { font: 700 .74rem/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.count { font: 500 .78rem var(--mono); color: var(--success); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count.over { color: var(--error); }
+.field .text { white-space: pre-wrap; font-size: .95rem; }
+.field .text.big { font: 600 1.3rem/1.3 var(--display); }
+.field .text[lang="hi"] { font-family: "Noto Sans Devanagari", "Nirmala UI", "Mangal", var(--body); }
+
+dl.defs { display: grid; grid-template-columns: max-content 1fr; gap: .45rem 1.2rem; }
+dl.defs dt { font-weight: 700; }
+dl.defs dd { margin: 0; }
+@media (max-width: 520px) { dl.defs { grid-template-columns: 1fr; } dl.defs dd { margin-bottom: .6rem; } }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0 2.4rem; }
+
+/* Sources */
+.sources { font-size: .9rem; }
+.sources li { overflow-wrap: anywhere; }
+
+/* ---------- Preserved handoff block (restyled only) ---------- */
+.handoff { border: 1.5px solid var(--ink); background: var(--surface); padding: 1.2rem 1.4rem 1rem; margin: 0; max-width: 100%; }
+.handoff h2 { font: 600 var(--step-2)/1.15 var(--display); margin: 0 0 .6rem; }
+.handoff h3 { font: 700 .78rem/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin: 1.3rem 0 .5rem; }
+.handoff p, .handoff ul, .handoff ol { font-size: .95rem; }
+.handoff pre { background: var(--sunken); border-left: 3px solid var(--ink); padding: .8rem 1rem; overflow-x: auto; font: 400 .85rem/1.5 var(--mono); }
+.handoff code { background: var(--sunken); }
+.handoff pre code { background: none; }
+
+.colophon { margin-top: 3rem; padding-top: 1rem; border-top: 2px solid var(--ink); font-size: var(--step--1); color: var(--ink-muted); display: flex; flex-wrap: wrap; gap: .4rem 1.6rem; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="dateline"><span><b>No. 14</b></span><span>Wednesday 14 October 2026</span><span>Today's difficulty: Steady</span><span>The build book</span></div>
+  <h1 class="wordmark">Gridlark<span class="dot">.</span></h1>
+  <p class="standfirst">How the app works, why it was chosen, how it earns, and every step from a GitHub push to a live Play Store listing. Written for the owner, who builds without Android Studio.</p>
+  <hr class="rule-double">
+</header>
+
+<div class="layout">
+
+<nav class="index" aria-label="Contents">
+  <h2>In this issue</h2>
+  <ol>
+    <li><a href="#what"><span>01</span><span>What Gridlark is</span></a></li>
+    <li><a href="#why"><span>02</span><span>Why this app</span></a></li>
+    <li><a href="#money"><span>03</span><span>How it makes money</span></a></li>
+    <li><a href="#stack"><span>04</span><span>Tech stack</span></a></li>
+    <li><a href="#architecture"><span>05</span><span>Architecture</span></a></li>
+    <li><a href="#engine"><span>06</span><span>Puzzle engine</span></a></li>
+    <li><a href="#design"><span>07</span><span>Design system</span></a></li>
+    <li><a href="#build"><span>08</span><span>Build with GitHub Actions</span></a></li>
+    <li><a href="#live"><span>09</span><span>Going live (India)</span></a></li>
+    <li><a href="#listing"><span>10</span><span>Store listing kit</span></a></li>
+    <li><a href="#roadmap"><span>11</span><span>Roadmap</span></a></li>
+    <li><a href="#risks"><span>12</span><span>Risks</span></a></li>
+    <li><a href="#handoff"><span>13</span><span>Context handoff</span></a></li>
+    <li><a href="#sources"><span>14</span><span>Sources</span></a></li>
+  </ol>
+  <div class="legend">
+    <div><span class="chip built">Built</span> in the code today</div>
+    <div><span class="chip est">Estimate</span> a modelled number</div>
+    <div><span class="chip plan">Planned</span> not built yet</div>
+    <div><span class="chip verify">Verify</span> check before relying on it</div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================================================ 1 -->
+<section class="chapter" id="what">
+  <p class="eyebrow">01 · The product</p>
+  <h2 class="h">What Gridlark is</h2>
+  <p class="lede">Gridlark is an offline Android app that serves four fresh logic puzzles every day: Crowns, Sun &amp; Moon, Trail and Sudoku. Every phone gets the same puzzles on the same date, each puzzle has exactly one solution, and every one can be solved by reasoning alone, with no guessing. It needs no account and no server. It earns from considerate ads and a one-time "Remove ads" purchase.</p>
+  <p>The daily set is numbered like a newspaper issue: issue No. 1 was 1 October 2026, so today is No. 14. Difficulty follows the week: Gentle on Monday and Tuesday, Steady on Wednesday and Thursday, Tricky from Friday to Sunday. A Practice mode offers unlimited puzzles at Gentle, Steady, Tricky or Fiendish. There is also an Archive of past dailies and a Stats tab with streaks, best and median times, and an activity heatmap.</p>
+
+  <div class="games">
+    <article class="game">
+      <svg class="board" viewBox="-2 -2 184 184" role="img" aria-label="Example Crowns board, 6 by 6, with four of six crowns placed"><rect class="r0" x="0" y="0" width="30" height="30"/><rect class="r0" x="30" y="0" width="30" height="30"/><rect class="r0" x="60" y="0" width="30" height="30"/><rect class="r0" x="90" y="0" width="30" height="30"/><rect class="r3" x="120" y="0" width="30" height="30"/><rect class="r3" x="150" y="0" width="30" height="30"/><rect class="r0" x="0" y="30" width="30" height="30"/><rect class="r0" x="30" y="30" width="30" height="30"/><rect class="r0" x="60" y="30" width="30" height="30"/><rect class="r1" x="90" y="30" width="30" height="30"/><rect class="r1" x="120" y="30" width="30" height="30"/><rect class="r3" x="150" y="30" width="30" height="30"/><rect class="r0" x="0" y="60" width="30" height="30"/><rect class="r2" x="30" y="60" width="30" height="30"/><rect class="r2" x="60" y="60" width="30" height="30"/><rect class="r3" x="90" y="60" width="30" height="30"/><rect class="r1" x="120" y="60" width="30" height="30"/><rect class="r3" x="150" y="60" width="30" height="30"/><rect class="r0" x="0" y="90" width="30" height="30"/><rect class="r4" x="30" y="90" width="30" height="30"/><rect class="r2" x="60" y="90" width="30" height="30"/><rect class="r3" x="90" y="90" width="30" height="30"/><rect class="r3" x="120" y="90" width="30" height="30"/><rect class="r3" x="150" y="90" width="30" height="30"/><rect class="r0" x="0" y="120" width="30" height="30"/><rect class="r4" x="30" y="120" width="30" height="30"/><rect class="r4" x="60" y="120" width="30" height="30"/><rect class="r4" x="90" y="120" width="30" height="30"/><rect class="r5" x="120" y="120" width="30" height="30"/><rect class="r5" x="150" y="120" width="30" height="30"/><rect class="r0" x="0" y="150" width="30" height="30"/><rect class="r0" x="30" y="150" width="30" height="30"/><rect class="r0" x="60" y="150" width="30" height="30"/><rect class="r4" x="90" y="150" width="30" height="30"/><rect class="r4" x="120" y="150" width="30" height="30"/><rect class="r5" x="150" y="150" width="30" height="30"/><line class="thin" x1="30" y1="0" x2="30" y2="180"/><line class="thin" x1="0" y1="30" x2="180" y2="30"/><line class="thin" x1="60" y1="0" x2="60" y2="180"/><line class="thin" x1="0" y1="60" x2="180" y2="60"/><line class="thin" x1="90" y1="0" x2="90" y2="180"/><line class="thin" x1="0" y1="90" x2="180" y2="90"/><line class="thin" x1="120" y1="0" x2="120" y2="180"/><line class="thin" x1="0" y1="120" x2="180" y2="120"/><line class="thin" x1="150" y1="0" x2="150" y2="180"/><line class="thin" x1="0" y1="150" x2="180" y2="150"/><line class="thick" x1="120" y1="0" x2="120" y2="30"/><line class="thick" x1="90" y1="30" x2="120" y2="30"/><line class="thick" x1="120" y1="30" x2="150" y2="30"/><line class="thick" x1="30" y1="60" x2="60" y2="60"/><line class="thick" x1="90" y1="30" x2="90" y2="60"/><line class="thick" x1="60" y1="60" x2="90" y2="60"/><line class="thick" x1="90" y1="60" x2="120" y2="60"/><line class="thick" x1="150" y1="30" x2="150" y2="60"/><line class="thick" x1="30" y1="60" x2="30" y2="90"/><line class="thick" x1="30" y1="90" x2="60" y2="90"/><line class="thick" x1="90" y1="60" x2="90" y2="90"/><line class="thick" x1="120" y1="60" x2="120" y2="90"/><line class="thick" x1="150" y1="60" x2="150" y2="90"/><line class="thick" x1="120" y1="90" x2="150" y2="90"/><line class="thick" x1="30" y1="90" x2="30" y2="120"/><line class="thick" x1="60" y1="90" x2="60" y2="120"/><line class="thick" x1="90" y1="90" x2="90" y2="120"/><line class="thick" x1="60" y1="120" x2="90" y2="120"/><line class="thick" x1="90" y1="120" x2="120" y2="120"/><line class="thick" x1="120" y1="120" x2="150" y2="120"/><line class="thick" x1="150" y1="120" x2="180" y2="120"/><line class="thick" x1="30" y1="120" x2="30" y2="150"/><line class="thick" x1="30" y1="150" x2="60" y2="150"/><line class="thick" x1="60" y1="150" x2="90" y2="150"/><line class="thick" x1="120" y1="120" x2="120" y2="150"/><line class="thick" x1="120" y1="150" x2="150" y2="150"/><line class="thick" x1="90" y1="150" x2="90" y2="180"/><line class="thick" x1="150" y1="150" x2="150" y2="180"/><path class="mark" d="M8,21 L8,10 L11.5,15 L15,8 L18.5,15 L22,10 L22,21 Z"/><path class="mark" d="M98,51 L98,40 L101.5,45 L105,38 L108.5,45 L112,40 L112,51 Z"/><path class="mark" d="M38,81 L38,70 L41.5,75 L45,68 L48.5,75 L52,70 L52,81 Z"/><path class="mark" d="M128,111 L128,100 L131.5,105 L135,98 L138.5,105 L142,100 L142,111 Z"/><path class="cross" d="M12,132 l6,6 m0,-6 l-6,6"/><path class="cross" d="M42,132 l6,6 m0,-6 l-6,6"/><path class="cross" d="M102,132 l6,6 m0,-6 l-6,6"/><path class="cross" d="M132,132 l6,6 m0,-6 l-6,6"/><path class="cross" d="M162,132 l6,6 m0,-6 l-6,6"/><path class="cross" d="M12,162 l6,6 m0,-6 l-6,6"/><path class="cross" d="M42,162 l6,6 m0,-6 l-6,6"/><path class="cross" d="M102,162 l6,6 m0,-6 l-6,6"/><path class="cross" d="M132,162 l6,6 m0,-6 l-6,6"/><rect class="frame" x="0" y="0" width="180" height="180" rx="3"/></svg>
+      <div>
+        <h3>Crowns</h3>
+        <p>Place one crown in every row, every column and every coloured region. Crowns may not touch, not even diagonally. Tap cycles a cell through blank, ×, crown; drag to cross out many cells at once.</p>
+        <p class="meta">6×6 Gentle · 7×7 Steady · 8×8 Tricky · 9×9 Fiendish</p>
+      </div>
+    </article>
+    <article class="game">
+      <svg class="board" viewBox="-2 -2 184 184" role="img" aria-label="Example Sun and Moon board, 6 by 6, with some suns, moons and signs given"><rect class="paperfill" x="0" y="0" width="180" height="180"/><line class="thin" x1="30" y1="0" x2="30" y2="180"/><line class="thin" x1="0" y1="30" x2="180" y2="30"/><line class="thin" x1="60" y1="0" x2="60" y2="180"/><line class="thin" x1="0" y1="60" x2="180" y2="60"/><line class="thin" x1="90" y1="0" x2="90" y2="180"/><line class="thin" x1="0" y1="90" x2="180" y2="90"/><line class="thin" x1="120" y1="0" x2="120" y2="180"/><line class="thin" x1="0" y1="120" x2="180" y2="120"/><line class="thin" x1="150" y1="0" x2="150" y2="180"/><line class="thin" x1="0" y1="150" x2="180" y2="150"/><circle class="sun" cx="15" cy="45" r="7"/><circle class="moon" cx="165" cy="45" r="7.5"/><circle class="paperfill" cx="169" cy="42.5" r="6.2"/><circle class="moon" cx="45" cy="75" r="7.5"/><circle class="paperfill" cx="49" cy="72.5" r="6.2"/><circle class="moon" cx="135" cy="75" r="7.5"/><circle class="paperfill" cx="139" cy="72.5" r="6.2"/><circle class="moon" cx="165" cy="75" r="7.5"/><circle class="paperfill" cx="169" cy="72.5" r="6.2"/><circle class="moon" cx="15" cy="105" r="7.5"/><circle class="paperfill" cx="19" cy="102.5" r="6.2"/><circle class="sun" cx="105" cy="105" r="7"/><circle class="sun" cx="165" cy="105" r="7"/><circle class="moon" cx="45" cy="135" r="7.5"/><circle class="paperfill" cx="49" cy="132.5" r="6.2"/><circle class="sun" cx="75" cy="135" r="7"/><circle class="sun" cx="135" cy="135" r="7"/><circle class="sun" cx="165" cy="135" r="7"/><circle class="moon" cx="75" cy="165" r="7.5"/><circle class="paperfill" cx="79" cy="162.5" r="6.2"/><rect class="sigbg" x="129" y="24" width="12" height="12" rx="2"/><path class="sig" d="M132,27 l6,6 m0,-6 l-6,6"/><rect class="sigbg" x="9" y="54" width="12" height="12" rx="2"/><path class="sig" d="M11.5,58 h7 M11.5,62 h7"/><rect class="sigbg" x="159" y="54" width="12" height="12" rx="2"/><path class="sig" d="M161.5,58 h7 M161.5,62 h7"/><rect class="sigbg" x="9" y="84" width="12" height="12" rx="2"/><path class="sig" d="M12,87 l6,6 m0,-6 l-6,6"/><rect class="sigbg" x="84" y="69" width="12" height="12" rx="2"/><path class="sig" d="M86.5,73 h7 M86.5,77 h7"/><rect class="sigbg" x="144" y="69" width="12" height="12" rx="2"/><path class="sig" d="M146.5,73 h7 M146.5,77 h7"/><rect class="sigbg" x="129" y="84" width="12" height="12" rx="2"/><path class="sig" d="M131.5,88 h7 M131.5,92 h7"/><rect class="sigbg" x="129" y="114" width="12" height="12" rx="2"/><path class="sig" d="M132,117 l6,6 m0,-6 l-6,6"/><rect class="sigbg" x="54" y="129" width="12" height="12" rx="2"/><path class="sig" d="M57,132 l6,6 m0,-6 l-6,6"/><rect class="sigbg" x="84" y="129" width="12" height="12" rx="2"/><path class="sig" d="M87,132 l6,6 m0,-6 l-6,6"/><rect class="sigbg" x="114" y="159" width="12" height="12" rx="2"/><path class="sig" d="M116.5,163 h7 M116.5,167 h7"/><rect class="frame" x="0" y="0" width="180" height="180" rx="3"/></svg>
+      <div>
+        <h3>Sun &amp; Moon</h3>
+        <p>Fill every cell with a sun or a moon. Each row and column holds equal numbers of each, and no more than two of the same symbol sit side by side. "=" joins matching neighbours; "×" joins opposites.</p>
+        <p class="meta">6×6 Gentle and Steady · 8×8 Tricky · 10×10 Fiendish</p>
+      </div>
+    </article>
+    <article class="game">
+      <svg class="board" viewBox="-2 -2 184 184" role="img" aria-label="Example Trail board, 5 by 5, with a line drawn from 1 past 3"><rect class="paperfill" x="0" y="0" width="180" height="180"/><line class="thin" x1="36" y1="0" x2="36" y2="180"/><line class="thin" x1="0" y1="36" x2="180" y2="36"/><line class="thin" x1="72" y1="0" x2="72" y2="180"/><line class="thin" x1="0" y1="72" x2="180" y2="72"/><line class="thin" x1="108" y1="0" x2="108" y2="180"/><line class="thin" x1="0" y1="108" x2="180" y2="108"/><line class="thin" x1="144" y1="0" x2="144" y2="180"/><line class="thin" x1="0" y1="144" x2="180" y2="144"/><polyline class="trailline" points="162,162 126,162 90,162 54,162 18,162 18,126 54,126 90,126 126,126 162,126 162,90"/><circle class="dot" cx="162" cy="162" r="10.5"/><text class="dotnum" x="162" y="166.5">1</text><circle class="dot" cx="18" cy="162" r="10.5"/><text class="dotnum" x="18" y="166.5">2</text><circle class="dot" cx="162" cy="126" r="10.5"/><text class="dotnum" x="162" y="130.5">3</text><circle class="dot" cx="90" cy="54" r="10.5"/><text class="dotnum" x="90" y="58.5">4</text><circle class="dot" cx="90" cy="18" r="10.5"/><text class="dotnum" x="90" y="22.5">5</text><circle class="dot" cx="18" cy="90" r="10.5"/><text class="dotnum" x="18" y="94.5">6</text><rect class="frame" x="0" y="0" width="180" height="180" rx="3"/></svg>
+      <div>
+        <h3>Trail</h3>
+        <p>Draw one continuous line that visits every cell exactly once. It starts at 1, passes the numbers in order and ends on the last one. Lines cannot cross walls. Drag to draw, drag back to retract.</p>
+        <p class="meta">5×5 Gentle · 6×6 Steady · 7×7 Tricky · 8×8 Fiendish</p>
+      </div>
+    </article>
+    <article class="game">
+      <svg class="board" viewBox="-2 -2 184 184" role="img" aria-label="Example 6 by 6 Sudoku board with 2 by 3 boxes"><rect class="paperfill" x="0" y="0" width="180" height="180"/><line class="thin" x1="30" y1="0" x2="30" y2="180"/><line class="thin" x1="0" y1="30" x2="180" y2="30"/><line class="thin" x1="60" y1="0" x2="60" y2="180"/><line class="thick" x1="0" y1="60" x2="180" y2="60"/><line class="thick" x1="90" y1="0" x2="90" y2="180"/><line class="thin" x1="0" y1="90" x2="180" y2="90"/><line class="thin" x1="120" y1="0" x2="120" y2="180"/><line class="thick" x1="0" y1="120" x2="180" y2="120"/><line class="thin" x1="150" y1="0" x2="150" y2="180"/><line class="thin" x1="0" y1="150" x2="180" y2="150"/><text class="digit" x="15" y="20.5">4</text><text class="digit" x="75" y="20.5">1</text><text class="digit" x="165" y="20.5">2</text><text class="digit" x="15" y="50.5">6</text><text class="digit" x="75" y="50.5">3</text><text class="digit" x="105" y="50.5">4</text><text class="digit" x="105" y="80.5">5</text><text class="digit" x="105" y="110.5">1</text><text class="digit" x="15" y="140.5">2</text><text class="digit" x="45" y="140.5">3</text><text class="digit" x="75" y="170.5">6</text><rect class="frame" x="0" y="0" width="180" height="180" rx="3"/></svg>
+      <div>
+        <h3>Sudoku</h3>
+        <p>Every digit once per row, column and box. Gentle days use a quick 6×6 board with 2×3 boxes; everything else is classic 9×9. Pencil notes and an auto-notes button are included.</p>
+        <p class="meta">6×6 Gentle · 9×9 Steady, Tricky, Fiendish</p>
+      </div>
+    </article>
+  </div>
+  <p class="fine">The four small boards are drawn for this guide to show what each game looks like. They are not output from the app's generator.</p>
+  <p>Trademark note: the app deliberately uses its own names. LinkedIn has filed TANGO (USPTO 98778548) and ZIP (99060408), so the Sun &amp; Moon and Trail names stay generic, and the store listing never mentions LinkedIn.</p>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="chapter" id="why">
+  <p class="eyebrow">02 · The decision</p>
+  <h2 class="h">Why this app, out of all the candidates</h2>
+  <p>The earlier plan (<code>Android App Plan 2026-27.html</code>) listed several ideas. This one, called "Daily Grid" there, won on expected two-year ad revenue. The reasons:</p>
+  <ul>
+    <li><strong>Tier-1 demand already exists.</strong> LinkedIn and NYT daily puzzles have taught millions of US, UK and EU players to look for a short daily logic fix. Those players see ads worth 10 to 25 times more than Indian traffic.</li>
+    <li><strong>Daily habits retain.</strong> LinkedIn reports that about 80% of people who play one of its games come back the next day. Daily puzzles give a reason to open the app every morning.</li>
+    <li><strong>No Android brand owns the multi-type daily logic niche.</strong> The existing apps each clone one game, and most are ad-heavy.</li>
+    <li><strong>Zero server cost.</strong> Puzzles are generated on the phone from the date, so there is nothing to host and nothing to break.</li>
+    <li><strong>Low policy risk.</strong> No user content, no real-money mechanics, no account data.</li>
+  </ul>
+
+  <h3>Market context</h3>
+  <ul>
+    <li>Puzzle is 12.7% of Google Play game downloads (42matters).</li>
+    <li>Puzzle revenue is about $10B and growing about 14% a year (Naavik).</li>
+    <li>India is about 22% of Play downloads (Sensor Tower India Q1 2026), but rewarded eCPM there is about $0.85–1.20, against $13–30 in the US (playio 2026 benchmarks). One Indian rewarded impression earns roughly 1/10 to 1/25 of a US one.</li>
+    <li>eCPMs rise 20–40% in Q4 (holiday ad budgets), then dip in January (GameAnalytics 2026, playio).</li>
+  </ul>
+
+  <h3>Revenue model, two years <span class="chip est">Estimate</span></h3>
+  <p>All figures are ad revenue over two years, modelled from typical ARPDAU and retention. They are planning numbers, not forecasts.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Candidate</th><th>Assumption</th><th class="num">100k installs</th><th class="num">1M installs</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>Daily logic-puzzle collection (Gridlark)</strong></td><td>ARPDAU ≈ $0.018; audience 30% Tier-1, 25% Tier-2, 45% India</td><td class="num">~$16k</td><td class="num">~$160k</td></tr>
+        <tr><td>Indian card games</td><td>India-heavy audience</td><td class="num">~$14k</td><td class="num">~$140k</td></tr>
+        <tr><td>Idle tycoon</td><td>Mixed audience, weaker retention</td><td class="num">~$9k</td><td class="num">~$90k</td></tr>
+        <tr><td>Utilities, hand cricket</td><td>Low session value</td><td class="num" colspan="2">under 1/10 of the puzzle app per install</td></tr>
+      </tbody>
+      <caption>Sensitivity: if 70% of players are in India instead of 45%, Gridlark's revenue roughly halves (about $8k and $80k).</caption>
+    </table>
+  </div>
+
+  <h3>Competitor gaps</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>App</th><th class="num">Installs</th><th class="num">Rating</th><th>What players say</th></tr></thead>
+      <tbody>
+        <tr><td>Queens Master (Kwalee)</td><td class="num">1M+</td><td class="num">4.2</td><td>Weekly ad-free subscription; angry reviews about it.</td></tr>
+        <tr><td>Queenzle</td><td class="num">500K+</td><td class="num">4.4</td><td>Two ads per level.</td></tr>
+        <tr><td>Queens (brennerd)</td><td class="num">100K+</td><td class="num">4.8</td><td>The strongest indie. Proof that quality wins reviews.</td></tr>
+        <tr><td>Trace (best Zip-style clone)</td><td class="num">50K+</td><td class="num">2.5</td><td>The biggest gap: path puzzles have demand and no good app.</td></tr>
+        <tr><td>Flow Free</td><td class="num">100M+</td><td class="num">n/a</td><td>Shows how large path-puzzle demand can be.</td></tr>
+        <tr><td>Tango-style clones</td><td class="num">≤10K</td><td class="num">n/a</td><td>Weak, small.</td></tr>
+        <tr><td>Nonogram.com</td><td class="num">50M+</td><td class="num">n/a</td><td>Ad-heavy.</td></tr>
+        <tr><td>Sudoku.com</td><td class="num">100M+</td><td class="num">n/a</td><td>The category leader for Sudoku alone.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The most common complaints across these apps, and Gridlark's answer to each:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Complaint</th><th>Gridlark</th></tr></thead>
+      <tbody>
+        <tr><td>Too many ads</td><td>Never on the board; interstitial at most once per two solves and four minutes apart. <span class="chip built">Built</span></td></tr>
+        <tr><td>Subscriptions</td><td>One-time Remove ads only. <span class="chip built">Built</span></td></tr>
+        <tr><td>Multiple solutions, guessing</td><td>Every puzzle verified unique; Crowns, Sun &amp; Moon and Sudoku are graded by a logic-only solver. <span class="chip built">Built</span></td></tr>
+        <tr><td>Lost progress</td><td>Every move saved to Room, also when the app goes to the background. <span class="chip built">Built</span></td></tr>
+        <tr><td>Paid hints</td><td>One free hint a day; more via an optional rewarded ad, free when no ad loads; unlimited after Remove ads. <span class="chip built">Built</span></td></tr>
+        <tr><td>No undo</td><td>Undo for every gesture, up to 300 steps. <span class="chip built">Built</span></td></tr>
+        <tr><td>Tiny targets</td><td>Boards fill the width; drag gestures fill skipped cells. <span class="chip built">Built</span></td></tr>
+        <tr><td>No colour-blind mode, no dark mode</td><td>Paul Tol palette, optional patterns, light and dark themes. <span class="chip built">Built</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="chapter" id="money">
+  <p class="eyebrow">03 · Revenue</p>
+  <h2 class="h">How it makes money</h2>
+  <p class="lede">Three sources: interstitial ads between puzzles, banner ads on the browsing screens, and rewarded ads for extra hints. A single "Remove ads" purchase switches the first two off. The rules are written to protect the daily habit, because a player who leaves takes all future impressions with them.</p>
+
+  <h3>Placement rules, as coded in <code>ads/AdsManager.kt</code></h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Format</th><th>Where and when</th><th>Limits</th></tr></thead>
+      <tbody>
+        <tr><td>Puzzle board</td><td>Never. No ad of any kind while a puzzle is on screen.</td><td>n/a</td></tr>
+        <tr><td>Interstitial</td><td>Only after the player taps Next or Done on a result card (<code>afterResult</code>).</td><td><code>SOLVES_PER_INTERSTITIAL = 2</code>; <code>MIN_GAP_MS</code> = 4 minutes; never on install day; skipped when a review prompt is due.</td></tr>
+        <tr><td>Banner</td><td>Anchored adaptive banner under the Today, Archive and Stats tabs (<code>ui/AppNav.kt</code>). Its height is reserved so content never jumps.</td><td>Hidden after Remove ads, and until consent allows ads.</td></tr>
+        <tr><td>Rewarded</td><td>Player chooses "Watch ad" for an extra hint after the free one.</td><td><code>FREE_HINTS_PER_DAY = 1</code>. If no ad is ready (offline), the hint is free.</td></tr>
+        <tr><td>Remove ads</td><td>One-time Play purchase, product id <code>remove_ads</code> (INAPP). Restorable from Settings.</td><td>No subscriptions. Owners get unlimited hints.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Consent comes first. On every start, <code>gatherConsent()</code> asks Google's User Messaging Platform whether a consent form is needed (GDPR in the EEA/UK, US state privacy laws). The Mobile Ads SDK starts only when <code>canRequestAds()</code> is true. Ad content is capped at rating T (teen), matching the 13+ audience. Settings shows "Ad privacy choices" wherever the law requires it.</p>
+
+  <h3>What a player is worth <span class="chip est">Estimate</span></h3>
+  <p>A player who solves all four dailies triggers at most two interstitials that day, because of the one-per-two-solves cap. Their value depends almost entirely on country:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Market</th><th class="num">Rewarded eCPM</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>United States</td><td class="num">$13–30</td><td>One rewarded view is worth 1.3 to 3 US cents.</td></tr>
+        <tr><td>India</td><td class="num">$0.85–1.20</td><td>The same view is worth about 0.1 US cents, roughly 1/10 to 1/25 of a US view.</td></tr>
+      </tbody>
+      <caption>eCPM = revenue per 1,000 impressions. Expect Q4 to run 20–40% higher, then a January dip.</caption>
+    </table>
+  </div>
+  <p>Planning numbers from section 02: blended ARPDAU of about $0.018, giving roughly $16k at 100k installs or $160k at 1M installs over two years. That is why the listing, screenshots and launch posts target English-speaking Tier-1 players first, even though most early installs may come from India.</p>
+  <p>Suggested price for Remove ads: ₹199 in India and $3.99 in the US. Set local prices in Play Console; Google converts the rest.</p>
+
+  <h3>Later: mediation <span class="chip plan">Planned</span></h3>
+  <p>At launch, all ads come from AdMob alone. Once daily users are in the thousands, add AdMob mediation with InMobi, AppLovin and Meta Audience Network. More bidders on each impression usually lift eCPM, especially in India where AdMob fill alone is weaker. Mediation is configured in the AdMob console plus one adapter dependency per network, so it is a small code change.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="chapter" id="stack">
+  <p class="eyebrow">04 · Tools</p>
+  <h2 class="h">Tech stack</h2>
+  <p>All versions live in <code>gradle/libs.versions.toml</code> and were checked on 14 October 2026. No Android Studio is needed: everything builds from the command line and on GitHub Actions.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Library or tool</th><th class="num">Version</th><th>Why it is here</th></tr></thead>
+      <tbody>
+        <tr><td>Android Gradle Plugin</td><td class="num">9.4.1</td><td>Builds the app. AGP 9 has Kotlin support built in, so there is no separate Kotlin Android plugin.</td></tr>
+        <tr><td>Gradle (wrapper)</td><td class="num">9.6.1</td><td>Build tool; pinned by <code>gradle/wrapper/gradle-wrapper.properties</code> with a checksum.</td></tr>
+        <tr><td>JDK</td><td class="num">21 (CI)</td><td>Runs the build. Code compiles to Java 17 bytecode.</td></tr>
+        <tr><td>Kotlin</td><td class="num">2.3.21</td><td>Language for both modules; also the Compose and serialization compiler plugins.</td></tr>
+        <tr><td>KSP</td><td class="num">2.3.12</td><td>Runs Room's code generator.</td></tr>
+        <tr><td>Compose BOM</td><td class="num">2026.09.00</td><td>Jetpack Compose UI, Material 3 1.4.0. Boards are drawn on a Compose Canvas.</td></tr>
+        <tr><td>Navigation Compose</td><td class="num">2.10.2</td><td>Type-safe routes (<code>@Serializable</code> route classes in <code>AppNav.kt</code>).</td></tr>
+        <tr><td>Lifecycle</td><td class="num">2.11.0</td><td>ViewModel, <code>collectAsStateWithLifecycle</code>, pause on background.</td></tr>
+        <tr><td>Activity Compose / Core KTX</td><td class="num">1.13.0 / 1.19.1</td><td>Edge-to-edge activity host.</td></tr>
+        <tr><td>Core SplashScreen</td><td class="num">1.2.0</td><td>Splash held until settings load, so the right theme shows at once.</td></tr>
+        <tr><td>Room</td><td class="num">2.8.5</td><td>SQLite database for puzzle progress, solves and times.</td></tr>
+        <tr><td>DataStore Preferences</td><td class="num">1.2.1</td><td>Settings and ad/hint counters.</td></tr>
+        <tr><td>WorkManager</td><td class="num">2.11.2</td><td>Daily reminder without the exact-alarm permission; survives reboots.</td></tr>
+        <tr><td>kotlinx.serialization / coroutines</td><td class="num">1.11.0 / 1.11.0</td><td>Saving boards as JSON; background work and flows.</td></tr>
+        <tr><td>ProfileInstaller</td><td class="num">1.4.1</td><td>Lets a baseline profile be installed (profile itself is on the roadmap).</td></tr>
+        <tr><td>Google Mobile Ads (play-services-ads)</td><td class="num">25.5.0</td><td>AdMob banner, interstitial, rewarded.</td></tr>
+        <tr><td>User Messaging Platform</td><td class="num">4.0.0</td><td>GDPR and US-state consent forms.</td></tr>
+        <tr><td>Play Billing (billing-ktx)</td><td class="num">9.1.0</td><td>The one-time <code>remove_ads</code> purchase.</td></tr>
+        <tr><td>Play Review (review-ktx)</td><td class="num">2.0.2</td><td>In-app review prompt, asked once after the fifth solve.</td></tr>
+        <tr><td>JUnit</td><td class="num">4.13.2</td><td>Engine and streak tests.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <dl class="defs">
+    <dt>SDK levels</dt><dd><code>compileSdk 37</code>, <code>targetSdk 36</code> (Play has required 36 for new apps and updates since 31 August 2026), <code>minSdk 26</code> (Android 8.0).</dd>
+    <dt>Dependency injection</dt><dd>Manual. <code>AppContainer</code> in <code>GridlarkApplication.kt</code> creates the database, settings, ads, billing and an app-wide coroutine scope once. No Hilt or Koin: the app is small enough that a framework adds more than it saves.</dd>
+    <dt>Pattern</dt><dd>MVVM with unidirectional data flow. Screens send events up; the ViewModel exposes one immutable <code>StateFlow&lt;PuzzleUi&gt;</code> down.</dd>
+    <dt>Release build</dt><dd>R8 minify and resource shrinking on; <code>proguard-rules.pro</code> keeps the serializers for saved boards.</dd>
+  </dl>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="chapter" id="architecture">
+  <p class="eyebrow">05 · Structure</p>
+  <h2 class="h">Architecture</h2>
+  <p class="lede">Two Gradle modules. <code>:engine</code> is plain Kotlin with no Android code: it makes and checks puzzles, and it can be tested on any computer. <code>:app</code> is the Android app: screens, saving, ads, billing and reminders. The app depends on the engine; the engine depends on nothing.</p>
+
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 560" role="img" aria-label="Module and layer diagram. The app module has five layers from Compose UI down to storage and SDKs. The engine module sits to the right and is called by the game logic layer.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah acc" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <!-- :app frame -->
+        <rect class="dg-frame" x="10" y="10" width="710" height="540" rx="4"/>
+        <text class="dg-big" x="26" y="36">:app</text>
+        <text class="dg-m" x="72" y="36">Android application · com.gridlark.app</text>
+        <!-- row labels -->
+        <text class="dg-lab" x="26" y="88">UI · Compose</text>
+        <text class="dg-lab" x="26" y="178">State</text>
+        <text class="dg-lab" x="26" y="268">Game logic</text>
+        <text class="dg-lab" x="26" y="358">Repositories</text>
+        <text class="dg-lab" x="26" y="372">&amp; services</text>
+        <text class="dg-lab" x="26" y="448">Storage</text>
+        <text class="dg-lab" x="26" y="462">&amp; SDKs</text>
+        <line class="dg-sep" x1="20" y1="132" x2="710" y2="132"/>
+        <line class="dg-sep" x1="20" y1="222" x2="710" y2="222"/>
+        <line class="dg-sep" x1="20" y1="312" x2="710" y2="312"/>
+        <line class="dg-sep" x1="20" y1="402" x2="710" y2="402"/>
+        <!-- row 1 -->
+        <rect class="dg-box" x="140" y="60" width="183" height="58" rx="3"/>
+        <text class="dg-t" x="152" y="82">Screens</text>
+        <text class="dg-s" x="152" y="100">Home, Puzzle, Archive, Stats,</text>
+        <text class="dg-s" x="152" y="113">Settings, Welcome · AppNav</text>
+        <rect class="dg-box" x="333" y="60" width="183" height="58" rx="3"/>
+        <text class="dg-t" x="345" y="82">Board views</text>
+        <text class="dg-s" x="345" y="100">Crowns, Duo, Trail, Sudoku</text>
+        <text class="dg-s" x="345" y="113">Canvas + gridGestures</text>
+        <rect class="dg-box" x="526" y="60" width="184" height="58" rx="3"/>
+        <text class="dg-t" x="538" y="82">Design system</text>
+        <text class="dg-s" x="538" y="100">ui/theme, ui/components</text>
+        <text class="dg-s" x="538" y="113">tokens, type, haptics</text>
+        <!-- row 2 -->
+        <rect class="dg-box hot" x="140" y="150" width="570" height="58" rx="3"/>
+        <text class="dg-t" x="152" y="172">PuzzleViewModel</text>
+        <text class="dg-s" x="152" y="190">StateFlow&lt;PuzzleUi&gt; · undo stack (300) · timer · hints · 400 ms debounced save · solve detection</text>
+        <text class="dg-s" x="152" y="203">Home, Archive and Stats read Room flows directly through the container</text>
+        <!-- arrows UI <-> VM -->
+        <path class="dg-a" d="M300,118 V150" marker-end="url(#ah)"/>
+        <text class="dg-m" x="306" y="139">events</text>
+        <path class="dg-a" d="M420,150 V118" marker-end="url(#ah)"/>
+        <text class="dg-m" x="426" y="139">PuzzleUi state</text>
+        <!-- row 3 -->
+        <rect class="dg-box" x="140" y="240" width="183" height="58" rx="3"/>
+        <text class="dg-t" x="152" y="262">game/Boards.kt</text>
+        <text class="dg-s" x="152" y="280">immutable BoardState,</text>
+        <text class="dg-s" x="152" y="293">moves, hints, save/restore</text>
+        <rect class="dg-box" x="333" y="240" width="183" height="58" rx="3"/>
+        <text class="dg-t" x="345" y="262">data/Games.kt</text>
+        <text class="dg-s" x="345" y="280">GameType, Daily seeds,</text>
+        <text class="dg-s" x="345" y="293">PuzzleFactory</text>
+        <rect class="dg-box" x="526" y="240" width="184" height="58" rx="3"/>
+        <text class="dg-t" x="538" y="262">data/Streaks.kt</text>
+        <text class="dg-s" x="538" y="280">streaks, best and</text>
+        <text class="dg-s" x="538" y="293">median times</text>
+        <path class="dg-a" d="M425,208 V240" marker-end="url(#ah)"/>
+        <!-- row 4 -->
+        <rect class="dg-box" x="140" y="330" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="150" y="352">PlayDao</text>
+        <text class="dg-s" x="150" y="370">Room DAO</text>
+        <rect class="dg-box" x="256" y="330" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="266" y="352">Settings</text>
+        <text class="dg-s" x="266" y="370">Repository</text>
+        <rect class="dg-box" x="372" y="330" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="382" y="352">AdsManager</text>
+        <text class="dg-s" x="382" y="370">consent, caps</text>
+        <rect class="dg-box" x="488" y="330" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="498" y="352">Billing</text>
+        <text class="dg-s" x="498" y="370">remove_ads</text>
+        <rect class="dg-box" x="604" y="330" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="614" y="352">Reminders</text>
+        <text class="dg-s" x="614" y="370">daily nudge</text>
+        <path class="dg-a" d="M328,208 V330" marker-end="url(#ah)"/>
+        <!-- row 5 -->
+        <rect class="dg-box quiet" x="140" y="420" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="150" y="442">Room</text>
+        <text class="dg-m" x="150" y="460">gridlark.db</text>
+        <rect class="dg-box quiet" x="256" y="420" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="266" y="442">DataStore</text>
+        <text class="dg-m" x="266" y="460">settings</text>
+        <rect class="dg-box quiet" x="372" y="420" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="382" y="442">Mobile Ads</text>
+        <text class="dg-s" x="382" y="460">+ UMP consent</text>
+        <rect class="dg-box quiet" x="488" y="420" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="498" y="442">Play Billing</text>
+        <text class="dg-s" x="498" y="460">Google Play</text>
+        <rect class="dg-box quiet" x="604" y="420" width="106" height="58" rx="3"/>
+        <text class="dg-t" x="614" y="442">WorkManager</text>
+        <text class="dg-s" x="614" y="460">notification</text>
+        <path class="dg-a" d="M193,388 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M309,388 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M425,388 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M541,388 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M657,388 V420" marker-end="url(#ah)"/>
+        <!-- container note -->
+        <text class="dg-s" x="140" y="510">AppContainer (GridlarkApplication) builds db, settings, ads, billing and appScope once,</text>
+        <text class="dg-s" x="140" y="525">then passes itself to each screen and ViewModel. MainActivity hosts one Compose tree.</text>
+        <!-- engine frame -->
+        <rect class="dg-frame dash" x="745" y="10" width="245" height="540" rx="4"/>
+        <text class="dg-big" x="761" y="36">:engine</text>
+        <text class="dg-m" x="761" y="54">pure Kotlin / JVM, no Android</text>
+        <rect class="dg-box hot" x="761" y="72" width="213" height="48" rx="3"/>
+        <text class="dg-t" x="773" y="92">Rng.kt</text>
+        <text class="dg-s" x="773" y="109">SplitMix64, Rng.mix(seed parts)</text>
+        <rect class="dg-box" x="761" y="130" width="213" height="40" rx="3"/>
+        <text class="dg-t" x="773" y="155">Difficulty.kt</text>
+        <text class="dg-m" x="900" y="155">4 levels</text>
+        <rect class="dg-box" x="761" y="180" width="213" height="62" rx="3"/>
+        <text class="dg-t" x="773" y="200">crowns/</text>
+        <text class="dg-s" x="773" y="217">Generator · Solver (5 tiers)</text>
+        <text class="dg-s" x="773" y="231">Puzzle · Rules</text>
+        <rect class="dg-box" x="761" y="252" width="213" height="62" rx="3"/>
+        <text class="dg-t" x="773" y="272">duo/  (Sun &amp; Moon)</text>
+        <text class="dg-s" x="773" y="289">Generator · Solver (3 tiers)</text>
+        <text class="dg-s" x="773" y="303">Puzzle · Rules</text>
+        <rect class="dg-box" x="761" y="324" width="213" height="62" rx="3"/>
+        <text class="dg-t" x="773" y="344">trail/</text>
+        <text class="dg-s" x="773" y="361">Generator · bitboard Solver</text>
+        <text class="dg-s" x="773" y="375">Puzzle · Rules</text>
+        <rect class="dg-box" x="761" y="396" width="213" height="62" rx="3"/>
+        <text class="dg-t" x="773" y="416">sudoku/</text>
+        <text class="dg-s" x="773" y="433">Generator · Solver (4 tiers)</text>
+        <text class="dg-s" x="773" y="447">6×6 and 9×9</text>
+        <text class="dg-s" x="761" y="490">Tested on the JVM by</text>
+        <text class="dg-s" x="761" y="505">GeneratorTest: valid, unique,</text>
+        <text class="dg-s" x="761" y="520">deterministic.</text>
+        <!-- cross-module arrows -->
+        <path class="dg-a acc" d="M470,240 V228 H761" marker-end="url(#ahA)"/>
+        <text class="dg-m" x="545" y="220">generate(difficulty, seed)</text>
+        <path class="dg-a acc" d="M231,298 V306 H740 V286 H761" marker-end="url(#ahA)"/>
+        <text class="dg-m" x="545" y="323">rules: conflicts, isSolved</text>
+      </svg>
+    </div>
+    <figcaption>Modules and layers. Arrows point from the caller to what it uses. Highlighted boxes are the two pieces the rest depends on most: the ViewModel inside the app, and the deterministic random generator inside the engine.</figcaption>
+  </figure>
+
+  <h3>What happens when you tap a cell</h3>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 170" role="img" aria-label="Data flow for one move in six steps: touch, ViewModel, reducer, commit, render, save.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="dg-ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <g>
+          <rect class="dg-box" x="2" y="20" width="148" height="130" rx="3"/>
+          <text class="dg-lab" x="14" y="42">1 · Touch</text>
+          <text class="dg-t" x="14" y="64">gridGestures</text>
+          <text class="dg-s" x="14" y="84">turns the finger</text>
+          <text class="dg-s" x="14" y="98">position into a cell</text>
+          <text class="dg-s" x="14" y="112">index; tap or drag</text>
+          <text class="dg-m" x="14" y="136">BoardCommon.kt</text>
+        </g>
+        <path class="dg-a" d="M150,85 H168" marker-end="url(#ah2)"/>
+        <g>
+          <rect class="dg-box" x="170" y="20" width="148" height="130" rx="3"/>
+          <text class="dg-lab" x="182" y="42">2 · Event</text>
+          <text class="dg-t" x="182" y="64">vm.onTap(cell)</text>
+          <text class="dg-s" x="182" y="84">begin(): snapshot the</text>
+          <text class="dg-s" x="182" y="98">board so the whole</text>
+          <text class="dg-s" x="182" y="112">gesture undoes at once</text>
+          <text class="dg-m" x="182" y="136">PuzzleViewModel</text>
+        </g>
+        <path class="dg-a" d="M318,85 H336" marker-end="url(#ah2)"/>
+        <g>
+          <rect class="dg-box hot" x="338" y="20" width="148" height="130" rx="3"/>
+          <text class="dg-lab" x="350" y="42">3 · Reducer</text>
+          <text class="dg-t" x="350" y="64">state.cycle(cell)</text>
+          <text class="dg-s" x="350" y="84">returns a new</text>
+          <text class="dg-s" x="350" y="98">CrownsState; the old</text>
+          <text class="dg-s" x="350" y="112">one is never changed</text>
+          <text class="dg-m" x="350" y="136">game/Boards.kt</text>
+        </g>
+        <path class="dg-a" d="M486,85 H504" marker-end="url(#ah2)"/>
+        <g>
+          <rect class="dg-box" x="506" y="20" width="148" height="130" rx="3"/>
+          <text class="dg-lab" x="518" y="42">4 · Commit</text>
+          <text class="dg-t" x="518" y="64">undo.addLast(old)</text>
+          <text class="dg-s" x="518" y="84">keeps up to 300 steps,</text>
+          <text class="dg-s" x="518" y="98">then checks solved;</text>
+          <text class="dg-s" x="518" y="112">emits a haptic event</text>
+          <text class="dg-m" x="518" y="136">commit()</text>
+        </g>
+        <path class="dg-a" d="M654,85 H672" marker-end="url(#ah2)"/>
+        <g>
+          <rect class="dg-box" x="674" y="20" width="148" height="130" rx="3"/>
+          <text class="dg-lab" x="686" y="42">5 · Render</text>
+          <text class="dg-t" x="686" y="64">StateFlow emits</text>
+          <text class="dg-s" x="686" y="84">Compose redraws the</text>
+          <text class="dg-s" x="686" y="98">Canvas; conflicts</text>
+          <text class="dg-s" x="686" y="112">turn red at once</text>
+          <text class="dg-m" x="686" y="136">CrownsBoardView</text>
+        </g>
+        <path class="dg-a" d="M822,85 H840" marker-end="url(#ah2)"/>
+        <g>
+          <rect class="dg-box" x="842" y="20" width="156" height="130" rx="3"/>
+          <text class="dg-lab" x="854" y="42">6 · Save</text>
+          <text class="dg-t" x="854" y="64">after 400 ms quiet</text>
+          <text class="dg-s" x="854" y="84">SavedBoard → JSON →</text>
+          <text class="dg-s" x="854" y="98">PlayDao.upsert();</text>
+          <text class="dg-s" x="854" y="112">instant on background</text>
+          <text class="dg-m" x="854" y="136">Room · plays</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>One move, end to end. Because every board state is immutable, undo is simply "show the previous object", and the save never races with the screen.</figcaption>
+  </figure>
+  <p>Saving is debounced: a burst of taps causes one database write, 400 ms after the last one. When the app goes to the background, <code>saveNow()</code> writes immediately on the app-wide scope, so the write finishes even if Android closes the screen. A mutex stops two saves from overlapping. A solved puzzle is never overwritten.</p>
+
+  <h3>Why every phone gets the same daily puzzle</h3>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 150" role="img" aria-label="Daily determinism: date to epoch day to seed to difficulty to generator to the same puzzle on every phone.">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="dg-ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <rect class="dg-box" x="2" y="20" width="148" height="110" rx="3"/>
+        <text class="dg-lab" x="14" y="42">Date</text>
+        <text class="dg-big" x="14" y="68">14 Oct 2026</text>
+        <text class="dg-s" x="14" y="90">the phone's local</text>
+        <text class="dg-s" x="14" y="104">calendar day</text>
+        <path class="dg-a" d="M150,75 H168" marker-end="url(#ah3)"/>
+        <rect class="dg-box" x="170" y="20" width="148" height="110" rx="3"/>
+        <text class="dg-lab" x="182" y="42">Epoch day</text>
+        <text class="dg-big" x="182" y="68">20740</text>
+        <text class="dg-s" x="182" y="90">days since 1970;</text>
+        <text class="dg-s" x="182" y="104">issue No. 14</text>
+        <path class="dg-a" d="M318,75 H336" marker-end="url(#ah3)"/>
+        <rect class="dg-box hot" x="338" y="20" width="148" height="110" rx="3"/>
+        <text class="dg-lab" x="350" y="42">Seed</text>
+        <text class="dg-m" x="350" y="66">Rng.mix(1, salt,</text>
+        <text class="dg-m" x="350" y="80">        20740)</text>
+        <text class="dg-s" x="350" y="102">SEED_VERSION 1 + a</text>
+        <text class="dg-s" x="350" y="116">fixed salt per game</text>
+        <path class="dg-a" d="M486,75 H504" marker-end="url(#ah3)"/>
+        <rect class="dg-box" x="506" y="20" width="148" height="110" rx="3"/>
+        <text class="dg-lab" x="518" y="42">Difficulty</text>
+        <text class="dg-big" x="518" y="68">Steady</text>
+        <text class="dg-s" x="518" y="90">Wednesday, so</text>
+        <text class="dg-s" x="518" y="104">MEDIUM</text>
+        <path class="dg-a" d="M654,75 H672" marker-end="url(#ah3)"/>
+        <rect class="dg-box" x="674" y="20" width="148" height="110" rx="3"/>
+        <text class="dg-lab" x="686" y="42">Generator</text>
+        <text class="dg-m" x="686" y="66">generate(MEDIUM,</text>
+        <text class="dg-m" x="686" y="80">         seed)</text>
+        <text class="dg-s" x="686" y="102">uses only Rng, never</text>
+        <text class="dg-s" x="686" y="116">kotlin.random</text>
+        <path class="dg-a" d="M822,75 H840" marker-end="url(#ah3)"/>
+        <rect class="dg-box" x="842" y="20" width="156" height="110" rx="3"/>
+        <text class="dg-lab" x="854" y="42">Result</text>
+        <text class="dg-t" x="854" y="66">Same puzzle on</text>
+        <text class="dg-t" x="854" y="82">every phone</text>
+        <text class="dg-m" x="854" y="108">d:crowns:20740</text>
+      </svg>
+    </div>
+    <figcaption>The daily pipeline. Nothing is downloaded. The seed comes from the date and fixed constants, and the generator's only source of randomness is SplitMix64, whose output is identical on every JVM and Android version.</figcaption>
+  </figure>
+  <div class="note warn">
+    <p><strong>Never change after release:</strong> <code>Daily.SEED_VERSION</code>, each <code>GameType.seedSalt</code> and <code>key</code>, <code>Daily.EPOCH</code>, the <code>Rng</code> algorithm, or the generators' order of random calls. Any of these changes every past and future daily puzzle, and saved progress would no longer match its puzzle. Engine changes that alter output must ship behind a new seed version for new dates only.</p>
+  </div>
+
+  <h3>Folder map</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Path</th><th>What lives there</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine/…/Rng.kt</code></td><td>SplitMix64 random generator with rejection sampling (no modulo bias) and <code>Rng.mix()</code> for combining seed parts.</td></tr>
+        <tr><td><code>engine/…/Difficulty.kt</code></td><td>EASY, MEDIUM, HARD, EXPERT. The app shows them as Gentle, Steady, Tricky, Fiendish.</td></tr>
+        <tr><td><code>engine/…/crowns/</code></td><td><code>CrownsPuzzle.kt</code> (model + <code>CrownsRules</code>: conflicts, solved, auto-mark), <code>CrownsSolver.kt</code>, <code>CrownsGenerator.kt</code>.</td></tr>
+        <tr><td><code>engine/…/duo/Duo.kt</code></td><td>Sun &amp; Moon model, rules, logic solver and generator in one file.</td></tr>
+        <tr><td><code>engine/…/trail/Trail.kt</code></td><td>Trail model, rules (<code>canExtend</code>, <code>isSolved</code>), bitboard solver and generator.</td></tr>
+        <tr><td><code>engine/…/sudoku/Sudoku.kt</code></td><td>Sudoku model for 6×6 and 9×9, candidate-based solver and generator.</td></tr>
+        <tr><td><code>engine/src/test/</code></td><td><code>GeneratorTest.kt</code> (correctness), <code>CrownsStats.kt</code> (optional tier histogram).</td></tr>
+        <tr><td><code>app/…/GridlarkApplication.kt</code></td><td><code>AppContainer</code> (manual DI) and reminder scheduling on start.</td></tr>
+        <tr><td><code>app/…/MainActivity.kt</code></td><td>Single activity. Splash until settings load, edge-to-edge, theme, then <code>GridlarkNav</code>. Starts consent and billing in <code>onStart</code>.</td></tr>
+        <tr><td><code>app/…/data/Database.kt</code></td><td>Room: one table <code>plays</code> (<code>PlayEntity</code>), <code>PlayDao</code>, database <code>gridlark.db</code> version 1, schema exported to <code>app/schemas</code>. Ids look like <code>d:crowns:20740</code> (daily) or <code>p:trail:&lt;seed&gt;</code> (practice).</td></tr>
+        <tr><td><code>app/…/data/Games.kt</code></td><td><code>GameType</code>, labels, time estimates, <code>AnyPuzzle</code>, <code>Daily</code> (epoch, issue number, weekday difficulty, seeds) and <code>PuzzleFactory</code>.</td></tr>
+        <tr><td><code>app/…/data/Settings.kt</code></td><td>DataStore: <code>UserSettings</code> plus ad and free-hint counters.</td></tr>
+        <tr><td><code>app/…/data/Streaks.kt</code></td><td>Pure functions for streaks and per-game stats. A day counts only when a daily was solved on its own date.</td></tr>
+        <tr><td><code>app/…/game/Boards.kt</code></td><td>Immutable <code>BoardState</code> for each game: moves, conflicts, progress, hints, <code>SavedBoard</code> save/restore.</td></tr>
+        <tr><td><code>app/…/ads/</code></td><td><code>AdsManager.kt</code> (consent, SDK start, frequency caps, rewarded) and <code>AdBanner.kt</code>.</td></tr>
+        <tr><td><code>app/…/billing/BillingManager.kt</code></td><td>Remove-ads purchase, acknowledgement, restore, refund handling. Entitlement cached in DataStore so it works offline.</td></tr>
+        <tr><td><code>app/…/reminders/Reminders.kt</code></td><td>WorkManager job that re-schedules itself daily and notifies only if some of today's four puzzles are unsolved.</td></tr>
+        <tr><td><code>app/…/ui/AppNav.kt</code></td><td>Routes and the three tabs (Today, Archive, Stats) with the banner slot.</td></tr>
+        <tr><td><code>app/…/ui/home, archive, stats, settings, puzzle</code></td><td>The screens. <code>puzzle/</code> holds <code>PuzzleScreen</code>, <code>PuzzleViewModel</code>, the four board views and shared gesture and accessibility code.</td></tr>
+        <tr><td><code>app/…/ui/theme, components</code></td><td>Colour tokens, typography, icons, glyphs, buttons, haptics.</td></tr>
+        <tr><td><code>app/src/main/assets/</code></td><td><code>privacy.txt</code> and <code>licenses.txt</code>, shown in-app by <code>DocumentScreen</code>.</td></tr>
+        <tr><td><code>app/src/main/res/font/</code></td><td>Fraunces, Atkinson Hyperlegible Next and Mono, bundled so the app never fetches fonts.</td></tr>
+        <tr><td><code>.github/workflows/android.yml</code></td><td>CI: tests, lint, debug APK, signed release APK and AAB.</td></tr>
+        <tr><td><code>docs/</code></td><td>Privacy policy, landing page and <code>app-ads.txt</code> for GitHub Pages.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="chapter" id="engine">
+  <p class="eyebrow">06 · The engine</p>
+  <h2 class="h">Puzzle engine deep-dive</h2>
+  <p class="lede">Every generator follows the same recipe: build a random complete solution, derive clues from it, then use a solver to make sure the clues lead to that solution and no other. For Crowns, Sun &amp; Moon and Sudoku the solver reasons like a person, in tiers, and the difficulty is the hardest tier the puzzle needs.</p>
+
+  <h3>Crowns</h3>
+  <ol class="steps">
+    <li><div><strong>Random solution.</strong> Place one crown per row and column, no two touching, by randomised backtracking.</div></li>
+    <li><div><strong>Grow regions.</strong> Each crown seeds one region. Regions grow one cell at a time, each with a random speed between 0.35 and 2.25, so shapes are uneven and interesting. Region numbers are then shuffled so colours are not tied to rows.</div></li>
+    <li><div><strong>Region repair.</strong> A brute-force search looks for any other valid crown placement. If it finds one, it takes a cell where that alternative puts a crown (never a real crown cell) and moves it into a neighbouring region, keeping every region connected. This repeats until the intended solution is the only one, for at most 2n² rounds.</div></li>
+    <li><div><strong>Grade.</strong> The logic solver solves the board and reports the hardest tier used. The generator keeps trying until the tier matches the target. After 30 tries it accepts one tier either side; after 90 it accepts any solvable board, so generation always finishes quickly.</div></li>
+  </ol>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th class="num">Tier</th><th>Technique</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Singles: a row, column or region with one free cell</td><td rowspan="2">Gentle (6×6) targets tiers 1–2</td></tr>
+        <tr><td class="num">2</td><td>Confinement: a region's free cells all lie in one row or column, or the reverse</td></tr>
+        <tr><td class="num">3</td><td>Pigeonhole sets: k regions squeezed into k rows or columns</td><td>Steady (7×7) targets 3–4</td></tr>
+        <tr><td class="num">4</td><td>Shallow look-ahead: a crown here would empty some row, column or region</td><td>Tricky (8×8) targets 4</td></tr>
+        <tr><td class="num">5</td><td>Deep look-ahead: a crown here leads to a contradiction after propagation</td><td>Fiendish (9×9) targets 5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Sun &amp; Moon</h3>
+  <p>A random valid grid is built by backtracking (balanced lines, never three in a row). A share of the true "=" and "×" signs is chosen (18% Gentle, 22% Steady, 16% Tricky, 12% Fiendish). Then, in random order, each given symbol is removed if the logic solver can still finish without it; after that, each sign is removed if no longer needed. Gentle boards get n/2 symbols back so the first moves are obvious.</p>
+  <p>Solver tiers: 1 signs and the no-three rule, 2 line counts (a line with half suns gets moons everywhere else), 3 one-step look-ahead. Gentle allows tiers up to 2; the others up to 3.</p>
+
+  <h3>Trail</h3>
+  <p>The solution path starts as a snake (serpentine) through the grid and is scrambled by "backbite" moves: about 60 × cells random moves, each of which keeps it a valid path through every cell. Walls are added only on edges the solution never crosses (none on Gentle, 6%, 9% and 10% of eligible edges as difficulty rises).</p>
+  <p>Numbers start dense, every 2–4 steps along the path. An exhaustive solver then counts solutions. If a second solution exists, a number is added where it first leaves the true path. Once unique, numbers are removed one at a time while the puzzle stays unique, down to a floor: n + 3 numbers on Gentle, n + 1 on Steady, as few as possible on Tricky and Fiendish.</p>
+  <p>The solver stores the grid (at most 8×8 = 64 cells) in one 64-bit number. At every step it checks for dead ends (a free cell with fewer than two free neighbours) and that every free cell is still reachable from the line's head. Each check costs a handful of machine instructions. It gives up after 150,000 nodes during generation and the generator retries with a fresh path. Trail difficulty comes from grid size, walls and how few numbers remain, not from a technique tier.</p>
+
+  <h3>Sudoku</h3>
+  <p>A random full grid (6×6 with 2×3 boxes on Gentle, 9×9 otherwise) is filled by backtracking. Cells are emptied in random order whenever the logic solver, capped at the target tier, can still solve it. Gentle and Steady then get a few clues back (n/2 on Gentle, 4 on Steady). Tricky and Fiendish try up to six grids and prefer one that truly needs the top allowed tier.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th class="num">Tier</th><th>Technique</th><th>Allowed on</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Naked singles</td><td rowspan="2">Gentle, Steady</td></tr>
+        <tr><td class="num">2</td><td>Hidden singles</td></tr>
+        <tr><td class="num">3</td><td>Locked candidates (pointing and claiming) and naked pairs</td><td>Tricky</td></tr>
+        <tr><td class="num">4</td><td>One-step look-ahead</td><td>Fiendish</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Daily difficulty</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Day</th><th>Level</th><th>Engine value</th></tr></thead>
+      <tbody>
+        <tr><td>Monday, Tuesday</td><td>Gentle</td><td><code>EASY</code></td></tr>
+        <tr><td>Wednesday, Thursday</td><td>Steady</td><td><code>MEDIUM</code></td></tr>
+        <tr><td>Friday, Saturday, Sunday</td><td>Tricky</td><td><code>HARD</code></td></tr>
+        <tr><td>Practice only</td><td>Fiendish</td><td><code>EXPERT</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Hints</h3>
+  <p>Hints live in <code>game/Boards.kt</code>. A hint first fixes any wrong mark (for example "This crown can't stay here."). Otherwise it reveals one correct cell, chosen to feel natural: the crown in the smallest unsolved region, the Sun &amp; Moon cell with the most filled neighbours, the Sudoku cell with fewest candidates, or the next few steps of the Trail. The hinted cell pulses in marigold.</p>
+
+  <h3>How the engine is tested</h3>
+  <p><code>engine/src/test/kotlin/com/gridlark/engine/GeneratorTest.kt</code> runs on any JVM, locally or in CI. For each game and every difficulty it generates 25 puzzles (change with <code>-Psamples=N</code>) and checks:</p>
+  <ul>
+    <li><strong>Valid:</strong> the stored solution obeys every rule; givens and signs agree with it.</li>
+    <li><strong>Unique:</strong> a separate brute-force counter finds exactly one solution. This runs for Crowns, Trail (with a 50-million-node budget) and Sudoku at every size, and for Sun &amp; Moon at 6×6. Larger Sun &amp; Moon boards rely on the logic solver reaching the stored solution, which it can only do if no other solution exists.</li>
+    <li><strong>Deterministic:</strong> generating again from the same seed gives an identical puzzle.</li>
+    <li>Crowns regions are all connected; Trail rules enforce number order; the RNG gives the same sequence twice.</li>
+  </ul>
+  <p>The tests also print average and worst generation times. The slowest case is Fiendish Sudoku, about 0.5 s on a desktop, which is why the app always generates off the main thread. <code>CrownsStats</code> prints a tier histogram when run with <code>-Pstats=1</code>.</p>
+  <div class="code"><span class="label">Run the engine tests</span><pre><code>./gradlew :engine:test
+./gradlew :engine:test -Psamples=200   <span class="c-com"># heavier soak</span></code></pre><button class="copy" type="button">Copy</button></div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section class="chapter" id="design">
+  <p class="eyebrow">07 · Look and feel</p>
+  <h2 class="h">The "Ink &amp; Paper" design system</h2>
+  <p class="lede">The app should feel like the puzzle page of a good newspaper: warm paper, black ink, one marigold accent, generous margins, left-aligned type. This guide uses the same tokens, so what you see here is what the app looks like.</p>
+
+  <h3>Colour tokens</h3>
+  <p>Fixed brand colours, no Android dynamic colour, so boards and shared results look the same on every phone. Values from <code>ui/theme/Theme.kt</code>; the swatches below follow your system theme.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:var(--paper)"></i><div><b>paper</b><span>#F5F1E8 · #161513</span></div></div>
+    <div class="sw"><i style="background:var(--surface)"></i><div><b>surface</b><span>#FFFCF5 · #1F1D1A</span></div></div>
+    <div class="sw"><i style="background:var(--sunken)"></i><div><b>sunken</b><span>#ECE6D9 · #2A2723</span></div></div>
+    <div class="sw"><i style="background:var(--rule)"></i><div><b>rule</b><span>#D9D2C3 · #3A3631</span></div></div>
+    <div class="sw"><i style="background:var(--ink)"></i><div><b>ink</b><span>#1C1B19 · #EFEAE0</span></div></div>
+    <div class="sw"><i style="background:var(--ink-muted)"></i><div><b>inkMuted</b><span>#5E5A52 · #ADA79B</span></div></div>
+    <div class="sw"><i style="background:var(--accent)"></i><div><b>accent (marigold)</b><span>#E9A23B · #F0B254</span></div></div>
+    <div class="sw"><i style="background:var(--accent-text)"></i><div><b>accentText</b><span>#9A5B0C · #F0B254</span></div></div>
+    <div class="sw"><i style="background:var(--success)"></i><div><b>success</b><span>#2F6B4F · #7FC29B</span></div></div>
+    <div class="sw"><i style="background:var(--error)"></i><div><b>error</b><span>#B3412E · #E88A73</span></div></div>
+  </div>
+  <p>Light value first, dark value second. In dark mode the paper is a warm near-black, not pure black, and the accent is lifted slightly so it keeps contrast.</p>
+  <h4>Region palette</h4>
+  <div class="regions" aria-label="Twelve region colours">
+    <i style="background:var(--r0)">1</i><i style="background:var(--r1)">2</i><i style="background:var(--r2)">3</i><i style="background:var(--r3)">4</i><i style="background:var(--r4)">5</i><i style="background:var(--r5)">6</i><i style="background:var(--r6)">7</i><i style="background:var(--r7)">8</i><i style="background:var(--r8)">9</i><i style="background:var(--r9)">10</i><i style="background:var(--r10)">11</i><i style="background:var(--r11)">12</i>
+  </div>
+  <p>The first nine are Paul Tol's "light" scheme, chosen to stay distinct for the common forms of colour blindness; three extensions cover larger boards. Each has a spoken name for TalkBack (blue, coral, sand, pink, sky, mint, pear, olive, grey, lilac, tan, sage). With "pattern assist" on, every region also gets a faint texture, and boards with more than nine regions always get one.</p>
+
+  <h3>Typography</h3>
+  <div class="specimen">
+    <div><small>Display · Fraunces 600, optical size 72</small><span class="sp-display">Gridlark No. 14</span></div>
+    <div><small>Titles · Fraunces 500–600, opsz 24</small><span class="sp-title">Sun &amp; Moon · Steady</span></div>
+    <div><small>UI and digits · Atkinson Hyperlegible Next 400–700</small><span class="sp-ui">One crown in every row, column and colour.</span></div>
+    <div><small>Timer · Atkinson Hyperlegible Mono 500</small><span class="sp-mono">04:17 · 1 hint</span></div>
+  </div>
+  <p>Fraunces gives the mastheads an editorial, slightly soft serif voice (its SOFT axis is set to 50, WONK to 0). Atkinson Hyperlegible was designed by the Braille Institute for low-vision readers, so digits like 1, 7, 6 and 8 never blur together on a grid. All three are OFL-licensed and bundled in <code>res/font</code>, so the app works fully offline. The type scale runs from 44 sp display down to 12 sp labels.</p>
+
+  <h3>Motion</h3>
+  <ul>
+    <li>Hint spotlight: a marigold ring pulses twice (320 ms in, 320 ms out), then fades over 400 ms.</li>
+    <li>Screen changes: a short slide plus fade, 300 ms.</li>
+    <li>Buttons scale down slightly while pressed.</li>
+    <li><strong>Reduce motion</strong> (a setting): screen changes become a 120 ms fade, and the hint ring shows still for 1.4 s instead of pulsing.</li>
+  </ul>
+
+  <h3>Haptics</h3>
+  <p>Each kind of feedback maps to one semantic Android haptic, and all of it can be switched off in Settings.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Moment</th><th>Haptic</th></tr></thead>
+      <tbody>
+        <tr><td>Mark a cell, select a Sudoku cell, undo</td><td><code>SegmentTick</code></td></tr>
+        <tr><td>Drag across cells</td><td><code>SegmentFrequentTick</code></td></tr>
+        <tr><td>Place a crown, sun or moon; reach a Trail number</td><td><code>ToggleOn</code></td></tr>
+        <tr><td>Clear a cell</td><td><code>ToggleOff</code></td></tr>
+        <tr><td>Enter a Sudoku digit</td><td><code>KeyboardTap</code></td></tr>
+        <tr><td>Try to change a given cell</td><td><code>Reject</code></td></tr>
+        <tr><td>Puzzle solved</td><td><code>Confirm</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Accessibility</h3>
+  <ul>
+    <li>TalkBack reads every cell, for example "Row 2, column 5, coral region, crown, breaks a rule", and a double tap acts on it.</li>
+    <li>Rule breaks are shown by colour and by shape (an underline under a clashing crown).</li>
+    <li>Colour-blind-safe regions, optional patterns, light and dark themes, reduce-motion, optional timer.</li>
+    <li>Banner space is reserved so nothing shifts under a finger when an ad loads.</li>
+  </ul>
+
+  <h3>What we avoided, on purpose</h3>
+  <p>Many new apps share one look: purple-blue gradients, frosted glass panels, emoji as icons, centred hero text and rounded cards everywhere. Gridlark uses none of these. There are no gradients, no glass, no emoji; layouts are left-aligned like a newspaper column; sections are separated by 1 dp hairline rules rather than boxes; icons are drawn as simple ink paths; and colour is reserved for meaning (regions, the accent, errors).</p>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="chapter" id="build">
+  <p class="eyebrow">08 · Building</p>
+  <h2 class="h">Build and test with GitHub Actions</h2>
+  <p class="lede">You do not need Android Studio. GitHub's servers build the app every time you push, run all the tests, and hand you an APK to install. Everything below uses Git Bash on Windows.</p>
+
+  <ol class="steps">
+    <li><div>
+      <h4>Create an empty GitHub repository</h4>
+      <p>On github.com, choose New repository. Name it <code>gridlark</code>, make it <strong>Private</strong>, and do not add a README, .gitignore or licence (the project already has them).</p>
+    </div></li>
+    <li><div>
+      <h4>Push the project</h4>
+      <p>Your home folder is itself a Git repository with no commits. Run <code>git init</code> inside the Gridlark folder so the project gets its own repository and nothing else from your home folder is uploaded.</p>
+      <div class="code"><span class="label">Git Bash</span><pre><code>cd ~/Desktop/Dev/Gridlark
+git init -b main
+git add .
+git status            <span class="c-com"># check: no .jks, no local.properties, no build/ folders</span>
+git commit -m "Gridlark: first version"
+git remote add origin https://github.com/YOUR-USERNAME/gridlark.git
+git push -u origin main</code></pre><button class="copy" type="button">Copy</button></div>
+      <p>The first push opens a browser window to sign in to GitHub. <code>.gitignore</code> already excludes keystores (<code>*.jks</code>, <code>*.keystore</code>), <code>local.properties</code> and build output.</p>
+    </div></li>
+    <li><div>
+      <h4>Watch the build</h4>
+      <p>Open the repository's <strong>Actions</strong> tab. The workflow is <code>.github/workflows/android.yml</code>, named "Android build". It runs on every push to <code>main</code>, on tags starting with <code>v</code>, on pull requests, and on demand (Run workflow button). Steps:</p>
+      <ol>
+        <li>Check out the code, install JDK 21 (Temurin), set up Gradle with caching.</li>
+        <li>Run <code>:engine:test</code>, <code>:app:testDebugUnitTest</code>, <code>:app:lintDebug</code> and <code>:app:assembleDebug</code>. Lint errors fail the build.</li>
+        <li>If the <code>KEYSTORE_BASE64</code> secret exists, decode it to a temporary <code>release.jks</code>.</li>
+        <li>Build the release APK and the AAB, passing your secrets as environment variables. <code>VERSION_CODE</code> is the GitHub run number, so every build has a higher version code automatically.</li>
+        <li>Upload artifacts: <code>gridlark-debug-apk</code>, <code>gridlark-release</code> (release APK, AAB and R8 <code>mapping.txt</code>) and <code>reports</code> (test and lint reports, kept 7 days).</li>
+      </ol>
+      <p>A full run takes several minutes. A green tick means everything passed.</p>
+    </div></li>
+    <li><div>
+      <h4>Download the APK</h4>
+      <p>Click the finished run, scroll to <strong>Artifacts</strong>, and download <code>gridlark-debug-apk</code>. GitHub gives you a .zip; unzip it to get the .apk.</p>
+    </div></li>
+    <li><div>
+      <h4>Install on your phone</h4>
+      <p>Copy the .apk to the phone (USB, Google Drive, or email it to yourself). Open it from the Files app. Android asks to allow installs from that source: tap Settings, turn on <strong>Allow from this source</strong> (called "Install unknown apps"), go back and tap Install. Play Protect may warn about an unknown developer; choose to install anyway. Turn the permission off again afterwards if you like.</p>
+    </div></li>
+  </ol>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Build</th><th>Package id</th><th>Ads</th><th>Signed with</th><th>Use it for</th></tr></thead>
+      <tbody>
+        <tr><td>Debug (<code>gridlark-debug-apk</code>)</td><td><code>com.gridlark.app.debug</code></td><td>Google test ads, always</td><td>Debug key</td><td>Daily testing on your phone. Installs next to the real app.</td></tr>
+        <tr><td>Release without secrets</td><td><code>com.gridlark.app</code></td><td>Google test ads</td><td>Throwaway debug key</td><td>Checking the shrunk release build. Not uploadable to Play.</td></tr>
+        <tr><td>Release with secrets</td><td><code>com.gridlark.app</code></td><td>Your real AdMob units</td><td>Your upload keystore</td><td>The AAB you upload to Play Console.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note warn"><p>Never tap ads in a build that uses your real AdMob ids, and never ask friends to. AdMob treats this as invalid traffic and can suspend the account. Test with the debug build, which always shows Google's labelled test ads.</p></div>
+
+  <h3>Optional: building on this PC</h3>
+  <p>A local toolchain exists at <code>C:\Users\Kanishk\.android-toolchain</code> (JDK 21, Android SDK, Gradle 9.6.1). Java on this PC cannot reach services.gradle.org, so the wrapper cannot download Gradle; use the helper script instead (see the handoff section). For most work, pushing to GitHub is simpler.</p>
+</section>
+
+<!-- ============================================================ 9 -->
+<section class="chapter" id="live">
+  <p class="eyebrow">09 · Launch</p>
+  <h2 class="h">Going live: the checklist for India</h2>
+  <p>Tick items as you go. Ticks are saved in this browser only.</p>
+  <p class="progress" id="progress">0 of 12 done</p>
+  <ul class="checklist" id="checklist">
+    <li><input type="checkbox" id="c1"><div class="body"><label for="c1">Create a Google Play developer account</label>
+      <p>play.google.com/console. One-time registration fee of US$25, charged in rupees. Choose a <strong>personal</strong> account unless you have a registered business. Google verifies your identity (government ID such as PAN or Aadhaar-linked details, plus a phone number and address) and later asks you to verify access to a real Android device.</p>
+      <p><strong>New personal accounts must run a closed test with at least 12 testers who stay opted in for 14 continuous days</strong> before production access is granted. Start recruiting testers (friends, family, a Reddit or Discord group) early. <span class="chip verify">Verify</span> current numbers in Play Console help.</p></div></li>
+    <li><input type="checkbox" id="c2"><div class="body"><label for="c2">Create the release (upload) keystore</label>
+      <p>Run once, in Git Bash or PowerShell. <code>keytool</code> ships with the JDK (here: <code>~/.android-toolchain/jdk/bin/keytool</code>). Use a strong password and remember it.</p>
+      <div class="code"><span class="label">Create keystore</span><pre><code>keytool -genkeypair -v -keystore release.jks -alias gridlark \
+  -keyalg RSA -keysize 4096 -validity 10000</code></pre><button class="copy" type="button">Copy</button></div>
+      <p>Keep <code>release.jks</code> <strong>outside</strong> the project folder, and back it up in two places (for example a USB drive and a password manager). Play App Signing holds the real app-signing key; this is your upload key. If it is lost, Google can reset it, but it takes days.</p></div></li>
+    <li><input type="checkbox" id="c3"><div class="body"><label for="c3">Add the signing secrets to GitHub</label>
+      <p>Convert the keystore to one long line of text:</p>
+      <div class="code"><span class="label">PowerShell (copies to clipboard)</span><pre><code>[Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks")) | Set-Clipboard</code></pre><button class="copy" type="button">Copy</button></div>
+      <div class="code"><span class="label">Git Bash (writes a text file)</span><pre><code>base64 -w 0 release.jks &gt; release.jks.b64</code></pre><button class="copy" type="button">Copy</button></div>
+      <p>In the repository: Settings → Secrets and variables → Actions → New repository secret. Add <code>KEYSTORE_BASE64</code> (the text), <code>KEYSTORE_PASSWORD</code>, <code>KEY_ALIAS</code> (<code>gridlark</code>) and <code>KEY_PASSWORD</code>. Delete <code>release.jks.b64</code> afterwards.</p></div></li>
+    <li><input type="checkbox" id="c4"><div class="body"><label for="c4">Host the privacy policy and app-ads.txt on GitHub Pages</label>
+      <p>The repository's <code>docs/</code> folder already holds <code>privacy.md</code>, <code>index.md</code> and <code>app-ads.txt</code>. Settings → Pages → Source: Deploy from a branch → <code>main</code>, folder <code>/docs</code>. The policy appears at <code>https://YOUR-USERNAME.github.io/gridlark/privacy</code>.</p>
+      <p>GitHub Pages from a private repository needs a paid GitHub plan. On the free plan, either make the repository public or create a second, public repository (for example <code>gridlark-site</code>) containing only the <code>docs</code> files.</p>
+      <p>app-ads.txt must sit at the <strong>root of a domain</strong>, and that domain must match the website in your Play listing. A user site repository named <code>YOUR-USERNAME.github.io</code> serves <code>https://YOUR-USERNAME.github.io/app-ads.txt</code>, which works; a project site under <code>/gridlark/</code> does not. Use that user site as the listing's website.</p>
+      <p>Add secrets <code>PRIVACY_POLICY_URL</code> (the policy URL) and <code>SUPPORT_EMAIL</code> (the address players can write to). The in-app policy under Settings is bundled text; <code>SUPPORT_EMAIL</code> fills in its contact line. <code>PRIVACY_POLICY_URL</code> is stored in the build for later use; the Play listing needs the URL directly.</p></div></li>
+    <li><input type="checkbox" id="c5"><div class="body"><label for="c5">Set up AdMob</label>
+      <ol>
+        <li>admob.google.com → Apps → Add app → Android → "not published yet" → name Gridlark. Link it to the Play listing once it is live.</li>
+        <li>Create three ad units: <strong>Banner</strong>, <strong>Interstitial</strong>, <strong>Rewarded</strong> (reward: 1 hint).</li>
+        <li>Add secrets <code>ADMOB_APP_ID</code> (format <code>ca-app-pub-…~…</code>), <code>ADMOB_BANNER_ID</code>, <code>ADMOB_INTERSTITIAL_ID</code>, <code>ADMOB_REWARDED_ID</code> (format <code>ca-app-pub-…/…</code>). The release build uses real ads only when all four are set.</li>
+        <li>Edit <code>docs/app-ads.txt</code>: replace <code>pub-XXXXXXXXXXXXXXXX</code> with your publisher id (Account → Settings). AdMob verifies it within a day or so of the app being live.</li>
+        <li>Privacy &amp; messaging → create a GDPR message and a US state regulations message, and publish them. The app's UMP code shows them automatically.</li>
+        <li>Payments: add your bank account and tax information (PAN) so earnings can be paid out.</li>
+      </ol></div></li>
+    <li><input type="checkbox" id="c6"><div class="body"><label for="c6">Create the app in Play Console</label>
+      <p>Create app → name "Gridlark: Daily Logic Puzzles", default language English (United States), type <strong>Game</strong>, <strong>Free</strong>. Category: Puzzle. Add the Hindi listing from section 10 as a translation.</p></div></li>
+    <li><input type="checkbox" id="c7"><div class="body"><label for="c7">Set up the payments profile and the Remove ads product</label>
+      <p>Play Console → Setup → Payments profile: enter your details, PAN and bank account (needed for any in-app purchase). Then Monetize → Products → In-app products → Create: product id <code>remove_ads</code> (must match exactly), name "Remove ads", one-time, ₹199 in India and $3.99 in the US. Activate it. The product only appears in the app once a build has been uploaded to a test track.</p></div></li>
+    <li><input type="checkbox" id="c8"><div class="body"><label for="c8">Complete App content (policy forms)</label>
+      <ul>
+        <li><strong>Privacy policy:</strong> your GitHub Pages URL.</li>
+        <li><strong>Ads:</strong> Yes, the app contains ads.</li>
+        <li><strong>Target audience:</strong> 13 and older (choose 13–15, 16–17, 18+). Not designed for children. This matches the app's teen ad-content cap.</li>
+        <li><strong>Content rating (IARC questionnaire):</strong> category Puzzle/Game; no violence, no user interaction or chat, no gambling, in-app purchases yes. Expect the lowest ratings.</li>
+        <li><strong>Data safety:</strong> see the table below.</li>
+        <li>Government app: No. Financial features: None. Health: None. News: No.</li>
+      </ul></div></li>
+    <li><input type="checkbox" id="c9"><div class="body"><label for="c9">Fill in the Data safety form</label>
+      <p>Gridlark itself collects nothing. The answers come from the Google Mobile Ads SDK. <span class="chip verify">Verify</span> against Google's AdMob data-disclosure page before submitting, because Google updates it.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Data type</th><th>Collected</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Location: approximate (from IP address)</td><td>Yes, by the ads SDK</td><td>Advertising, analytics, fraud prevention</td></tr>
+          <tr><td>Device or other IDs (advertising ID, app set ID)</td><td>Yes, by the ads SDK</td><td>Advertising, analytics, fraud prevention</td></tr>
+          <tr><td>App activity: app interactions (ad views, taps)</td><td>Yes, by the ads SDK</td><td>Advertising, analytics</td></tr>
+          <tr><td>App info and performance: diagnostics</td><td>Yes, by the ads SDK</td><td>Analytics, fraud prevention</td></tr>
+          <tr><td>Personal info, messages, photos, contacts, health</td><td>No</td><td>n/a</td></tr>
+          <tr><td>Financial info (purchase history)</td><td>Handled by Google Play, not the app</td><td>n/a</td></tr>
+        </tbody>
+      </table></div>
+      <p>Also answer: data is encrypted in transit (yes); account creation (none); users can request deletion (progress lives only on the device and is deleted by clearing app data).</p></div></li>
+    <li><input type="checkbox" id="c10"><div class="body"><label for="c10">Build a signed release</label>
+      <p>Once all secrets are set, push to <code>main</code> or tag a version. To set the visible version name, tag and push:</p>
+      <div class="code"><span class="label">Git Bash</span><pre><code>git tag v1.0.0
+git push origin v1.0.0</code></pre><button class="copy" type="button">Copy</button></div>
+      <p><code>VERSION_CODE</code> is the GitHub run number, so it always increases. <code>VERSION_NAME</code> defaults to 1.0.0 in <code>app/build.gradle.kts</code>; to change it, pass <code>VERSION_NAME</code> to the release step of the workflow (for example as a repository variable). Download the <code>gridlark-release</code> artifact; the file you need ends in <code>.aab</code>. Keep <code>mapping.txt</code> to read crash stack traces.</p></div></li>
+    <li><input type="checkbox" id="c11"><div class="body"><label for="c11">Closed test: 12 testers for 14 days</label>
+      <p>Testing → Closed testing → create a track, add testers by email (a Google Group is easiest), upload the AAB, roll out. Testers join via the opt-in link and install from Play. Check in the debug build and the closed-test build that consent, ads, the purchase (use a licence-tester account under Setup → License testing) and reminders all work.</p></div></li>
+    <li><input type="checkbox" id="c12"><div class="body"><label for="c12">Apply for production and launch</label>
+      <p>After 14 days, Dashboard → Apply for production. Answer the questions about your test honestly. Once approved, create a production release with the same AAB (or a newer one), roll out to 20% first, watch Android vitals and reviews for a few days, then go to 100%.</p></div></li>
+  </ul>
+
+  <h3>All secrets in one place</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Secret</th><th>Value</th><th>If missing</th></tr></thead>
+      <tbody>
+        <tr><td><code>KEYSTORE_BASE64</code></td><td>Base64 of <code>release.jks</code></td><td>Release signed with a throwaway debug key</td></tr>
+        <tr><td><code>KEYSTORE_PASSWORD</code></td><td>Keystore password</td><td rowspan="3">Signing fails if the keystore is set but these are wrong</td></tr>
+        <tr><td><code>KEY_ALIAS</code></td><td><code>gridlark</code></td></tr>
+        <tr><td><code>KEY_PASSWORD</code></td><td>Key password</td></tr>
+        <tr><td><code>ADMOB_APP_ID</code></td><td><code>ca-app-pub-…~…</code></td><td rowspan="4">Release uses Google test ads (all four needed)</td></tr>
+        <tr><td><code>ADMOB_BANNER_ID</code></td><td><code>ca-app-pub-…/…</code></td></tr>
+        <tr><td><code>ADMOB_INTERSTITIAL_ID</code></td><td><code>ca-app-pub-…/…</code></td></tr>
+        <tr><td><code>ADMOB_REWARDED_ID</code></td><td><code>ca-app-pub-…/…</code></td></tr>
+        <tr><td><code>PRIVACY_POLICY_URL</code></td><td>GitHub Pages policy URL</td><td>Not used by the app yet (stored in BuildConfig). Play Console still needs the URL.</td></tr>
+        <tr><td><code>SUPPORT_EMAIL</code></td><td>Your support address</td><td>In-app policy shows a placeholder instead of your address</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="chapter" id="listing">
+  <p class="eyebrow">10 · Store</p>
+  <h2 class="h">Store listing kit</h2>
+  <p>Ready to paste. Counters show Play's character limits. The text uses generic puzzle terms (star battle, binary puzzle, number path, sudoku) and never LinkedIn's game names.</p>
+  <div class="listing">
+    <div class="field"><header><b>App name</b><span class="count" data-for="t-title" data-limit="30"></span></header><div class="text big" id="t-title">Gridlark: Daily Logic Puzzles</div></div>
+    <div class="field"><header><b>Short description</b><span class="count" data-for="t-short" data-limit="80"></span></header><div class="text" id="t-short">Four fresh logic puzzles every day. Offline, one solution each, never a guess.</div></div>
+    <div class="field"><header><b>Full description</b><span class="count" data-for="t-full" data-limit="4000"></span></header><div class="text" id="t-full">Gridlark is a daily set of four logic puzzles, made for a calm few minutes with your morning coffee or chai.
+
+Every day brings a new Crowns, Sun &amp; Moon, Trail and Sudoku. Everyone plays the same puzzles on the same date, so you can compare times with friends. Every puzzle has exactly one solution and can be solved by pure logic. You never need to guess.
+
+THE FOUR PUZZLES
+• Crowns: place one crown in every row, column and coloured region. Crowns may not touch, not even diagonally. If you enjoy star battle puzzles, you will feel at home.
+• Sun &amp; Moon: a binary puzzle. Fill the grid with suns and moons so every row and column is balanced, with no more than two of a kind side by side. = and × signs show which neighbours match.
+• Trail: a number path puzzle. Draw one line through every cell, passing the numbers in order.
+• Sudoku: classic 9×9, plus a quick 6×6 on gentle days.
+
+FAIR BY DESIGN
+• One solution, always. Puzzles are checked by a solver that uses only the steps a careful person would make.
+• Difficulty follows the week: gentle on Monday and Tuesday, steady midweek, tricky at the weekend.
+• Practice mode gives you unlimited extra puzzles at four levels, from Gentle to Fiendish.
+• Undo every move, see rule breaks at a glance, and use one free hint every day.
+• Your progress saves after every move.
+
+WORKS OFFLINE
+Gridlark makes its puzzles on your phone. No account, no sign-in and no internet needed to play. Your progress, streaks and best times stay on your device.
+
+COMFORTABLE TO PLAY
+• Light and dark themes
+• Colour-blind-safe region colours, with optional patterns
+• Clear, highly legible numbers
+• TalkBack support for every cell
+• Reduce-motion setting and gentle haptics you can switch off
+• Optional daily reminder at a time you choose
+
+RESPECTFUL ADS
+There are never ads on the puzzle board. A short ad may appear between puzzles, at most once every two solves. A single one-time purchase removes ads for good. No subscriptions, ever.
+
+A new issue every morning. See you at the grid.</div></div>
+  </div>
+
+  <h3>Screenshot captions</h3>
+  <ol>
+    <li>Four fresh puzzles, every day</li>
+    <li>Crowns: one per row, column and colour</li>
+    <li>Sun &amp; Moon: balance every line</li>
+    <li>Trail: one line through every cell</li>
+    <li>Sudoku, from a quick 6×6 to classic 9×9</li>
+    <li>One solution. Never a guess.</li>
+    <li>Plays offline. No account needed.</li>
+    <li>Dark mode and colour-blind-safe colours</li>
+  </ol>
+  <p>Shoot screenshots on the debug build (test ads only show on browse screens, never on boards). Use a caption band in paper colour above each phone frame, set in Fraunces, left-aligned.</p>
+
+  <h3>Feature graphic (1024 × 500)</h3>
+  <p>Paper background, no gradient. On the left, the wordmark "Gridlark." in Fraunces with the marigold full stop, and a single line beneath: "Four logic puzzles. Every day." On the right, a partly solved 7×7 Crowns board in the region palette with a marigold hint ring on one cell. Keep important content away from the edges, because Play crops it on some surfaces.</p>
+
+  <h3>Keywords to target</h3>
+  <p>Use these naturally in the description and in replies to reviews; Play has no keyword field.</p>
+  <p><code>logic puzzle</code> <code>daily puzzle</code> <code>brain puzzle</code> <code>star battle</code> <code>binary puzzle</code> <code>takuzu</code> <code>number path</code> <code>one line puzzle</code> <code>sudoku</code> <code>6x6 sudoku</code> <code>offline puzzle</code> <code>no wifi games</code> <code>crown puzzle</code></p>
+  <p>Avoid "Queens", "Tango", "Zip" and "LinkedIn" in the title, description and screenshots.</p>
+
+  <h3>Hindi listing</h3>
+  <div class="listing">
+    <div class="field"><header><b>App name (hi-IN)</b><span class="count" data-for="t-hi-title" data-limit="30"></span></header><div class="text big" lang="hi" id="t-hi-title">Gridlark: रोज़ की लॉजिक पहेली</div></div>
+    <div class="field"><header><b>Short description (hi-IN)</b><span class="count" data-for="t-hi-short" data-limit="80"></span></header><div class="text" lang="hi" id="t-hi-short">हर दिन चार नई लॉजिक पहेलियाँ। ऑफ़लाइन, एक ही हल, कोई अंदाज़ा नहीं।</div></div>
+  </div>
+  <p class="fine">Have a native Hindi speaker read these before publishing.</p>
+
+  <h3>Launch marketing plan</h3>
+  <ol class="steps">
+    <li><div><strong>Closed test as a community.</strong> Recruit the 12+ testers from puzzle fans, not only friends, and ask them for honest feedback in the 14 days.</div></li>
+    <li><div><strong>Reddit.</strong> A launch post on r/AndroidGaming (respect its self-promotion rules: be the developer, answer every comment) and a "made a daily logic puzzle app, every puzzle has one solution" post on r/puzzles. Lead with what players hate elsewhere: no ads on the board, no subscriptions, no guessing.</div></li>
+    <li><div><strong>Short videos.</strong> YouTube Shorts and Instagram Reels titled "Can you solve today's Crowns in 60 seconds?" Screen-record the debug build, one puzzle per day, same time daily. The daily format gives you endless content.</div></li>
+    <li><div><strong>Share text.</strong> The app's Share button already posts "Gridlark No. 14 · …, solved in 4:17, no hints" with the Play link. Encourage testers to share results in group chats.</div></li>
+    <li><div><strong>Timing.</strong> Launching before November catches the Q4 eCPM rise; early players then carry into January.</div></li>
+  </ol>
+</section>
+
+<!-- ============================================================ 11 -->
+<section class="chapter" id="roadmap">
+  <p class="eyebrow">11 · After launch</p>
+  <h2 class="h">Roadmap</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Item</th><th>Why</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>AdMob mediation (InMobi, AppLovin, Meta Audience Network)</td><td>More bidders per impression, better fill in India.</td><td>When daily users reach the low thousands</td></tr>
+        <tr><td>A/B test ad caps</td><td>Find whether one interstitial per 2 or per 3 solves earns more over a month, counting lost players.</td><td>Month 2–3</td></tr>
+        <tr><td>Baseline profiles</td><td>Faster first launch and smoother first boards; ProfileInstaller is already included.</td><td>Month 1–2</td></tr>
+        <tr><td>Localisation: German, French, Spanish, Portuguese, Hindi</td><td>Puzzles need little text, so translation is cheap and opens high-eCPM European markets.</td><td>Month 2–4</td></tr>
+        <tr><td>Weekly hard puzzle</td><td>A Fiendish puzzle each Sunday for the most engaged players; a reason to come back weekly.</td><td>Month 2</td></tr>
+        <tr><td>Home-screen widget</td><td>Shows today's issue and streak; a daily reminder without a notification.</td><td>Month 3</td></tr>
+        <tr><td>Play Games achievements</td><td>Streak and solve milestones; small discovery boost.</td><td>Month 4+</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section class="chapter" id="risks">
+  <p class="eyebrow">12 · What could go wrong</p>
+  <h2 class="h">Risks and mitigations</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Trademark complaint (game names)</td><td>Own names only (Crowns, Sun &amp; Moon, Trail); never mention LinkedIn, Queens, Tango or Zip in the listing.</td></tr>
+        <tr><td>Audience skews to India, revenue halves</td><td>English Tier-1 positioning, Tier-1 marketing channels, European localisation; mediation for better Indian fill.</td></tr>
+        <tr><td>AdMob invalid-traffic suspension</td><td>Debug builds always use test ads; never tap your own live ads; cap frequency.</td></tr>
+        <tr><td>Play policy strike for disruptive ads</td><td>Interstitials only at natural breaks after a result, never on launch or mid-puzzle; frequency caps in code.</td></tr>
+        <tr><td>Production access delayed by the 12-tester rule</td><td>Recruit testers before the first upload; keep them opted in for the full 14 days.</td></tr>
+        <tr><td>Lost upload keystore</td><td>Two backups; Play App Signing allows an upload-key reset.</td></tr>
+        <tr><td>Daily puzzles change after an update</td><td>Frozen seed constants; tests check determinism; any output change goes behind a new seed version.</td></tr>
+        <tr><td>Slow generation on low-end phones</td><td>Generation runs off the main thread; worst case about 0.5 s on desktop for Fiendish Sudoku. Watch Android vitals and add a pre-generation step for the next day if needed.</td></tr>
+        <tr><td>eCPM seasonality</td><td>Plan cash flow on the January dip, not the Q4 peak.</td></tr>
+        <tr><td>Clones copy the idea</td><td>Ship quality and reviews fast; the multi-game daily set and fair-ads promise are hard to copy cheaply.</td></tr>
+        <tr><td>Yearly target-SDK deadline</td><td>Raise <code>targetSdk</code> each summer before Play's August deadline; CI lint catches most issues.</td></tr>
+        <tr><td>One-person project</td><td>This guide, the handoff section and the README keep the project resumable by anyone.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 13 -->
+<section class="chapter" id="s13">
+  <p class="eyebrow">13 · For whoever works on this next</p>
+<!-- HANDOFF:START -->
+<section class="handoff" id="handoff">
+<h2>Context handoff</h2>
+<p><b>Last updated:</b> 2026-10-14 22:36 IST</p>
+<h3>Decision</h3>
+<p>App = <b>Gridlark</b>, an offline daily logic-puzzle collection (Crowns, Sun &amp; Moon, Trail, Sudoku). Chosen for best 2-year ad revenue: Tier-1 (US/UK/EU) organic demand from daily-puzzle habits, strong retention, zero server cost.</p>
+<h3>State</h3>
+<ul>
+  <li>Research DONE (market/eCPM, competitors, UI/UX, stack). Summaries are in the sections above.</li>
+  <li>Engine DONE: <code>engine/</code> generators + logic solvers for Crowns, Sun &amp; Moon, Trail, Sudoku. Tests brute-force-verify uniqueness and determinism.</li>
+  <li>App DONE and compiling: Compose UI (Welcome, Today, Puzzle with 4 boards, Archive, Stats, Settings, Privacy/Licences), Room progress, DataStore settings, AdMob + UMP consent, Play Billing remove-ads, WorkManager reminder, in-app review.</li>
+  <li>Local verification PASSED: engine tests, app unit tests (BoardsTest 9, StreaksTest 17), lint 0 errors, debug + R8 release builds (release APK ~4.4 MB).</li>
+  <li>CI DONE: <code>.github/workflows/android.yml</code> builds and uploads <code>gridlark-debug-apk</code> and <code>gridlark-release</code> artifacts.</li>
+  <li>Docs DONE: this guide, README.md, docs/privacy.md, docs/app-ads.txt.</li>
+</ul>
+<h3>Next</h3>
+<ol>
+  <li>Emulator smoke test on Android 16 (system image downloading to <code>~/.android-toolchain/sdk</code>), screenshots, fix anything found.</li>
+  <li>Final code review pass (independent reviewer agent).</li>
+  <li>git init + first commit inside <code>Desktop/Dev/Gridlark</code>; owner pushes to GitHub (steps in the "Build &amp; test" section).</li>
+  <li>Owner tasks for launch: AdMob IDs, keystore secrets, Play Console listing (see "Going live").</li>
+</ol>
+<h3>How to resume</h3>
+<pre># Local build (Java on this PC cannot reach services.gradle.org, so use the local Gradle):
+~/.android-toolchain/g.sh :engine:test :app:testDebugUnitTest :app:assembleDebug
+# On GitHub Actions the wrapper (./gradlew) works normally: .github/workflows/android.yml</pre>
+<p>Key files: <code>engine/</code> (generators, solvers, tests), <code>app/src/main/java/com/gridlark/app/</code> (data, game/Boards.kt, ui/puzzle/*, ui/home, ui/AppNav.kt, ads, billing, reminders), <code>gradle/libs.versions.toml</code>.</p>
+</section>
+<!-- HANDOFF:END -->
+</section>
+
+<!-- ============================================================ 14 -->
+<section class="chapter" id="sources">
+  <p class="eyebrow">14 · References</p>
+  <h2 class="h">Sources</h2>
+  <h3>Market and monetisation</h3>
+  <ul class="sources">
+    <li>42matters, Google Play game categories by download trends: <a href="https://42matters.com/top-google-play-game-categories-by-download-trends">42matters.com/top-google-play-game-categories-by-download-trends</a></li>
+    <li>Sensor Tower, India mobile market Q1 2026: <a href="https://sensortower.com/blog/india-mobile-market-q1-2026">sensortower.com/blog/india-mobile-market-q1-2026</a></li>
+    <li>Naavik, games industry analysis: <a href="https://naavik.co/">naavik.co</a></li>
+    <li>playio, rewarded ad benchmarks 2026: <a href="https://blog.playio.co/rewarded-ad-benchmarks-2026">blog.playio.co/rewarded-ad-benchmarks-2026</a></li>
+    <li>playio, mobile game eCPM benchmarks 2026: <a href="https://blog.playio.co/mobile-game-ecpm-benchmarks-2026">blog.playio.co/mobile-game-ecpm-benchmarks-2026</a></li>
+    <li>GameAnalytics, mobile benchmarks 2026: <a href="https://gameanalytics.com/reports">gameanalytics.com/reports</a></li>
+    <li>LinkedIn games next-day return (~80%), reported by TechRadar: <a href="https://www.techradar.com/pro/linkedin-has-a-new-way-to-keep-you-hooked-on-the-site-more-games-and-i-might-be-tempted">techradar.com</a></li>
+    <li>USPTO trademark status (TANGO 98778548, ZIP 99060408): <a href="https://tsdr.uspto.gov/">tsdr.uspto.gov</a></li>
+  </ul>
+  <h3>Platform documentation</h3>
+  <ul class="sources">
+    <li>Target API level requirements: <a href="https://developer.android.com/google/play/requirements/target-sdk">developer.android.com/google/play/requirements/target-sdk</a></li>
+    <li>Testing requirements for new personal developer accounts: <a href="https://support.google.com/googleplay/android-developer/answer/14151465">support.google.com/googleplay/android-developer/answer/14151465</a></li>
+    <li>AdMob test ads: <a href="https://developers.google.com/admob/android/test-ads">developers.google.com/admob/android/test-ads</a></li>
+    <li>AdMob privacy and UMP: <a href="https://developers.google.com/admob/android/privacy">developers.google.com/admob/android/privacy</a></li>
+    <li>AdMob data disclosure for Play's Data safety form: <a href="https://developers.google.com/admob/android/privacy/play-data-disclosure">developers.google.com/admob/android/privacy/play-data-disclosure</a></li>
+    <li>app-ads.txt for apps: <a href="https://support.google.com/admob/answer/9363762">support.google.com/admob/answer/9363762</a></li>
+    <li>Google Play Billing: <a href="https://developer.android.com/google/play/billing">developer.android.com/google/play/billing</a></li>
+    <li>GitHub Pages: <a href="https://docs.github.com/en/pages">docs.github.com/en/pages</a></li>
+    <li>Paul Tol's colour schemes: <a href="https://personal.sron.nl/~pault/">personal.sron.nl/~pault</a></li>
+    <li>Fonts: <a href="https://fonts.google.com/specimen/Fraunces">Fraunces</a>, <a href="https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next">Atkinson Hyperlegible Next</a>, <a href="https://fonts.google.com/specimen/Atkinson+Hyperlegible+Mono">Atkinson Hyperlegible Mono</a></li>
+  </ul>
+  <p class="fine">Market numbers were gathered during research in October 2026 and are quoted as found. Revenue figures in sections 02 and 03 are the project's own estimates.</p>
+</section>
+
+<footer class="colophon">
+  <span>Gridlark build book · issue No. 14 · 14 October 2026</span>
+  <span>Set in Fraunces and Atkinson Hyperlegible, with system fonts when offline</span>
+  <span>See also <code>README.md</code> and <code>docs/</code></span>
+</footer>
+
+</main>
+</div>
+</div>
+
+<script>
+(function () {
+  // Character counters for the listing kit (counts code points, as Play roughly does).
+  document.querySelectorAll('.count[data-for]').forEach(function (el) {
+    var src = document.getElementById(el.getAttribute('data-for'));
+    if (!src) return;
+    var n = Array.from(src.textContent).length;
+    var limit = parseInt(el.getAttribute('data-limit'), 10);
+    el.textContent = n.toLocaleString('en-US') + ' / ' + limit.toLocaleString('en-US');
+    if (n > limit) el.classList.add('over');
+  });
+
+  // Copy buttons.
+  document.querySelectorAll('.code .copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var text = pre.innerText.split('\n').map(function (l) { return l.replace(/\s+#.*$/, ''); }).join('\n').trim();
+      var done = function (msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { selectPre(pre); done('Selected'); });
+      } catch (e) { selectPre(pre); done('Selected'); }
+    });
+  });
+  function selectPre(pre) {
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  // Launch checklist, remembered in this browser only.
+  var KEY = 'gridlark-golive-v1';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#checklist input[type=checkbox]'));
+  var progress = document.getElementById('progress');
+  function refresh() {
+    var n = 0;
+    boxes.forEach(function (b) { b.closest('li').classList.toggle('done', b.checked); if (b.checked) n++; });
+    progress.textContent = n + ' of ' + boxes.length + ' done';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener('change', function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      refresh();
+    });
+  });
+  refresh();
+
+  // Highlight the current chapter in the index.
+  var links = {};
+  document.querySelectorAll('.index a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var map = { s13: 'handoff' };
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var id = map[e.target.id] || e.target.id;
+        Object.keys(links).forEach(function (k) { links[k].classList.toggle('active', k === id); });
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('section.chapter').forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

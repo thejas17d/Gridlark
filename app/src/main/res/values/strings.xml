@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gridlark</string>
+    <string name="reminder_channel">Daily puzzles</string>
+    <string name="reminder_channel_desc">One reminder a day when new puzzles are ready.</string>
+    <string name="reminder_title">Today\'s puzzles are ready</string>
+    <string name="reminder_text_fresh">Four new puzzles are waiting. Gentle on Monday, trickier by the weekend.</string>
+    <string name="reminder_text_partial">%1$d of today\'s puzzles still to solve.</string>
+</resources>
