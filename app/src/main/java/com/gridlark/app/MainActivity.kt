@@ -46,7 +46,8 @@ class MainActivity : ComponentActivity() {
             }
             LaunchedEffect(dark) {
                 val style = if (dark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-                else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                // darkScrim is used where the system can't draw dark icons (API 26): keep them visible.
+                else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.argb(0x80, 0x1B, 0x1B, 0x1B))
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
             GridlarkTheme(settings.theme) {

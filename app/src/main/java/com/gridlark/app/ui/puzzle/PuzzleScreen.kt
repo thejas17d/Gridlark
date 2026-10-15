@@ -2,6 +2,7 @@ package com.gridlark.app.ui.puzzle
 
 import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -88,6 +89,7 @@ fun PuzzleScreen(
     container: AppContainer,
     vm: PuzzleViewModel,
     onBack: () -> Unit,
+    onDone: () -> Unit,
     onNext: (NextTarget) -> Unit,
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -126,8 +128,11 @@ fun PuzzleScreen(
     var freeLeft by remember { mutableIntStateOf(0) }
     LaunchedEffect(ui.hintsUsed, settings.adsRemoved) { freeLeft = vm.freeHintsLeft() }
 
+    var leaving by remember { mutableStateOf(false) }
     fun leaveResult(target: NextTarget?) {
-        val go = { if (target == null) onBack() else onNext(target) }
+        if (leaving) return
+        leaving = true
+        val go = { if (target == null) onDone() else onNext(target) }
         val act = activity
         val reviewDue = (ui.completion?.solvedCount ?: 0) >= 5 && !settings.reviewAsked
         when {
@@ -137,6 +142,9 @@ fun PuzzleScreen(
             else -> container.ads.afterResult(act) { go() }
         }
     }
+
+    BackHandler(enabled = ui.showRules && !ui.loading) { vm.dismissRules() }
+    BackHandler(enabled = ui.completion != null) { leaveResult(null) }
 
     Box(Modifier.fillMaxSize().background(c.paper)) {
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
@@ -324,12 +332,14 @@ fun PuzzleScreen(
         }
 
         if (hintSheet) {
+            // Decide once: the button must do exactly what its label says (rewarded ads are opt-in only).
+            val adReady = remember { container.ads.rewardedReady() }
             HintDialog(
-                rewardedReady = container.ads.rewardedReady(),
+                rewardedReady = adReady,
                 onWatch = {
                     hintSheet = false
                     val act = activity
-                    if (act != null) container.ads.showRewarded(act, onReward = { vm.applyHint() }, onSkipped = {})
+                    if (adReady && act != null) container.ads.showRewarded(act, onReward = { vm.applyHint() }, onSkipped = {})
                     else vm.applyHint()
                 },
                 onDismiss = { hintSheet = false },
@@ -446,6 +456,7 @@ private fun CompletionCard(
             .widthIn(max = 640.dp)
             .background(c.surface, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 28.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

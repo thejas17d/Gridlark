@@ -120,7 +120,7 @@ fun CrownsBoardView(
                 }
                 "Row ${i / n + 1}, column ${i % n + 1}, ${RegionNames[state.puzzle.regions[i] % RegionNames.size]} region, $mark"
             },
-            onActivate = { callbacks.onTap(it) },
+            onActivate = { callbacks.onDown(it); callbacks.onTap(it) },
         )
     }
 }

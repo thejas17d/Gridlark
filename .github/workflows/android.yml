@@ -64,6 +64,7 @@ jobs:
           SUPPORT_EMAIL: ${{ secrets.SUPPORT_EMAIL }}
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 1.0.${{ github.run_number }}
+          REQUIRE_RELEASE_CONFIG: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
           if [ -z "$ADMOB_APP_ID" ]; then echo "::warning::AdMob secrets not set: release build uses Google test ads."; fi
           ./gradlew --stacktrace :app:assembleRelease :app:bundleRelease

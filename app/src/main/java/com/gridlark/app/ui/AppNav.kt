@@ -35,12 +35,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -111,12 +112,15 @@ fun GridlarkNav(container: AppContainer, startWithWelcome: Boolean, reduceMotion
         },
     ) {
         composable<WelcomeRoute> {
-            WelcomeScreen(container) {
+            WelcomeScreen(container, dropUnlessResumed {
                 nav.navigate(MainRoute) { popUpTo(WelcomeRoute) { inclusive = true } }
-            }
+            })
         }
-        composable<MainRoute> {
-            MainTabs(container, nav)
+        composable<MainRoute> { entry ->
+            MainTabs(container) { route ->
+                // Only navigate from a settled screen, so a double tap can't open two puzzles.
+                if (entry.lifecycle.currentState == Lifecycle.State.RESUMED) nav.navigate(route)
+            }
         }
         composable<PuzzleRoute> { entry ->
             val r = entry.toRoute<PuzzleRoute>()
@@ -131,10 +135,15 @@ fun GridlarkNav(container: AppContainer, startWithWelcome: Boolean, reduceMotion
                 key = args.id,
                 factory = viewModelFactory { initializer { PuzzleViewModel(container, args) } },
             )
+            // Ignore taps while this screen is animating away (prevents a double pop to a blank screen).
+            val back = dropUnlessResumed { nav.popBackStack() }
             PuzzleScreen(
                 container = container,
                 vm = vm,
-                onBack = { nav.popBackStack() },
+                onBack = back,
+                // Called once (guarded inside PuzzleScreen), possibly right after an ad closes,
+                // when this entry may not be RESUMED yet; so these are deliberately unguarded.
+                onDone = { nav.popBackStack() },
                 onNext = { target ->
                     val next = when (target) {
                         is NextTarget.Daily -> dailyRoute(target.game, target.epochDay)
@@ -149,23 +158,23 @@ fun GridlarkNav(container: AppContainer, startWithWelcome: Boolean, reduceMotion
         composable<SettingsRoute> {
             SettingsScreen(
                 container = container,
-                onBack = { nav.popBackStack() },
-                onOpenPrivacy = { nav.navigate(PrivacyRoute) },
-                onOpenLicenses = { nav.navigate(LicensesRoute) },
+                onBack = dropUnlessResumed { nav.popBackStack() },
+                onOpenPrivacy = dropUnlessResumed { nav.navigate(PrivacyRoute) },
+                onOpenLicenses = dropUnlessResumed { nav.navigate(LicensesRoute) },
                 modifier = Modifier.statusBarsPadding().navigationBarsPadding(),
             )
         }
         composable<PrivacyRoute> {
-            DocumentScreen("Privacy policy", "privacy.txt", { nav.popBackStack() }, Modifier.statusBarsPadding().navigationBarsPadding())
+            DocumentScreen("Privacy policy", "privacy.txt", dropUnlessResumed { nav.popBackStack() }, Modifier.statusBarsPadding().navigationBarsPadding())
         }
         composable<LicensesRoute> {
-            DocumentScreen("Open-source licences", "licenses.txt", { nav.popBackStack() }, Modifier.statusBarsPadding().navigationBarsPadding())
+            DocumentScreen("Open-source licences", "licenses.txt", dropUnlessResumed { nav.popBackStack() }, Modifier.statusBarsPadding().navigationBarsPadding())
         }
     }
 }
 
 @Composable
-private fun MainTabs(container: AppContainer, nav: NavHostController) {
+private fun MainTabs(container: AppContainer, navigate: (Any) -> Unit) {
     val c = Grid.colors
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     var today by rememberSaveable { mutableStateOf(LocalDate.now().toEpochDay()) }
@@ -188,18 +197,19 @@ private fun MainTabs(container: AppContainer, nav: NavHostController) {
                     Tab.TODAY -> HomeScreen(
                         container = container,
                         today = LocalDate.ofEpochDay(today),
-                        onOpenDaily = { g, d -> nav.navigate(dailyRoute(g, d)) },
-                        onOpenPractice = { g, d, seed -> nav.navigate(practiceRoute(g, d, seed)) },
-                        onOpenSettings = { nav.navigate(SettingsRoute) },
+                        onOpenDaily = { g, d -> navigate(dailyRoute(g, d)) },
+                        onOpenPractice = { g, d, seed -> navigate(practiceRoute(g, d, seed)) },
+                        onOpenSettings = { navigate(SettingsRoute) },
                     )
-                    Tab.ARCHIVE -> ArchiveScreen(container, onOpen = { g, d -> nav.navigate(dailyRoute(g, d)) })
+                    Tab.ARCHIVE -> ArchiveScreen(container, onOpen = { g, d -> navigate(dailyRoute(g, d)) })
                     Tab.STATS -> StatsScreen(container)
                 }
             }
         }
         if (canShowAds && !settings.adsRemoved) {
+            // Clear separation between the ad and the tabs, so taps meant for navigation don't land on it.
             Hairline()
-            AdBanner()
+            AdBanner(Modifier.padding(top = 4.dp, bottom = 10.dp))
         }
         Column(Modifier.fillMaxWidth().background(c.paper).navigationBarsPadding()) {
             Hairline(color = c.ink)

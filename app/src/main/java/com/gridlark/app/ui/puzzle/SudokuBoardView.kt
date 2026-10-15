@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +27,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,7 +59,21 @@ fun SudokuBoardView(
     val cb = rememberUpdatedState(callbacks)
     val pulse by rememberPulse(hintKey, reduceMotion)
     val measurer = rememberTextMeasurer()
-    Box(modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(6.dp))) {
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(6.dp))) {
+        val cellPx = constraints.maxWidth.toFloat() / n
+        // [given, user, clash, note][digit]; rebuilt only when size or theme changes.
+        val glyphs = remember(cellPx, n, c, density) {
+            val unit = cellPx / density.density / density.fontScale
+            val given = TextStyle(fontFamily = UiFamily, fontWeight = FontWeight.Bold, fontSize = (unit * 0.56f).sp, color = c.ink)
+            val styles = listOf(
+                given,
+                given.copy(fontWeight = FontWeight.Medium, color = c.accentText),
+                given.copy(fontWeight = FontWeight.Medium, color = c.error),
+                TextStyle(fontFamily = MonoFamily, fontSize = (unit * 0.22f).sp, color = c.inkMuted),
+            )
+            styles.map { st -> List(n + 1) { d -> if (d == 0) null else measurer.measure(d.toString(), st) } }
+        }
         Canvas(Modifier.fillMaxSize().gridGestures(n, cb)) {
             val cell = size.width / n
             val selValue = if (selected >= 0) state.values[selected] else 0
@@ -82,30 +99,25 @@ fun SudokuBoardView(
                 drawLine(if (vThick) c.ink else c.rule, Offset(k * cell, 0f), Offset(k * cell, size.height), if (vThick) thick else thin)
                 drawLine(if (hThick) c.ink else c.rule, Offset(0f, k * cell), Offset(size.width, k * cell), if (hThick) thick else thin)
             }
-            val unit = cell / density / fontScale
-            val digitGiven = TextStyle(fontFamily = UiFamily, fontWeight = FontWeight.Bold, fontSize = (unit * 0.56f).sp, color = c.ink)
-            val digitUser = digitGiven.copy(fontWeight = FontWeight.Medium, color = c.accentText)
-            val digitBad = digitGiven.copy(fontWeight = FontWeight.Medium, color = c.error)
-            val noteStyle = TextStyle(fontFamily = MonoFamily, fontSize = (unit * 0.22f).sp, color = c.inkMuted)
             val noteCols = p.boxCols
             val noteRows = (n + noteCols - 1) / noteCols
             for (i in 0 until n * n) {
                 val left = (i % n) * cell; val top = (i / n) * cell
                 val v = state.values[i]
                 if (v != 0) {
-                    val style = when {
-                        state.isGiven(i) -> digitGiven
-                        highlightConflicts && conflicts[i] -> digitBad
-                        else -> digitUser
+                    val kind = when {
+                        state.isGiven(i) -> 0
+                        highlightConflicts && conflicts[i] -> 2
+                        else -> 1
                     }
-                    val layout = measurer.measure(v.toString(), style)
+                    val layout = glyphs[kind][v] ?: continue
                     drawText(layout, topLeft = Offset(left + (cell - layout.size.width) / 2f, top + (cell - layout.size.height) / 2f))
                 } else if (state.notes[i] != 0) {
                     for (d in 1..n) {
                         if (state.notes[i] and (1 shl d) == 0) continue
                         val k = d - 1
                         val sx = cell / noteCols; val sy = cell / noteRows
-                        val layout = measurer.measure(d.toString(), noteStyle)
+                        val layout = glyphs[3][d] ?: continue
                         drawText(layout, topLeft = Offset(
                             left + (k % noteCols) * sx + (sx - layout.size.width) / 2f,
                             top + (k / noteCols) * sy + (sy - layout.size.height) / 2f,
@@ -138,7 +150,7 @@ fun SudokuBoardView(
                 val sel = if (i == selected) ", selected" else ""
                 "Row ${i / n + 1}, column ${i % n + 1}, $content$sel"
             },
-            onActivate = { callbacks.onTap(it) },
+            onActivate = { callbacks.onDown(it); callbacks.onTap(it) },
         )
     }
 }

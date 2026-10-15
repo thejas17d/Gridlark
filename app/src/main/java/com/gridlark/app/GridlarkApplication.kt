@@ -1,6 +1,7 @@
 package com.gridlark.app
 
 import android.app.Application
+import androidx.work.ExistingWorkPolicy
 import com.gridlark.app.ads.AdsManager
 import com.gridlark.app.billing.BillingManager
 import com.gridlark.app.data.GridlarkDatabase
@@ -33,7 +34,7 @@ class GridlarkApplication : Application() {
             // Records the install day on first launch (no interstitials that day).
             container.settings.counters(java.time.LocalDate.now().toEpochDay())
             val s = container.settings.current()
-            Reminders.schedule(this@GridlarkApplication, s.reminderEnabled, s.reminderMinutes)
+            Reminders.schedule(this@GridlarkApplication, s.reminderEnabled, s.reminderMinutes, ExistingWorkPolicy.KEEP)
         }
     }
 }

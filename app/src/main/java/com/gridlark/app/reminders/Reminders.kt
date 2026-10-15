@@ -21,8 +21,9 @@ import com.gridlark.app.MainActivity
 import com.gridlark.app.R
 import com.gridlark.app.data.GameType
 import java.time.Duration
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
@@ -34,20 +35,32 @@ object Reminders {
     private const val WORK = "daily_reminder"
     const val CHANNEL = "daily"
 
-    fun schedule(context: Context, enabled: Boolean, minutesOfDay: Int) {
+    /**
+     * @param policy REPLACE when the player changes the setting; KEEP at app start (so a
+     * reminder that is about to run is never cancelled); APPEND_OR_REPLACE from the worker itself.
+     */
+    fun schedule(
+        context: Context,
+        enabled: Boolean,
+        minutesOfDay: Int,
+        policy: ExistingWorkPolicy = ExistingWorkPolicy.REPLACE,
+    ) {
         val wm = WorkManager.getInstance(context)
         if (!enabled) {
             wm.cancelUniqueWork(WORK)
             return
         }
-        val now = LocalDateTime.now()
-        var next = LocalDateTime.of(LocalDate.now(), LocalTime.of(minutesOfDay / 60, minutesOfDay % 60))
-        if (!next.isAfter(now.plusMinutes(1))) next = next.plusDays(1)
+        // Zoned times so daylight-saving changes and travel keep the chosen wall-clock time.
+        val zone = ZoneId.systemDefault()
+        val now = ZonedDateTime.now(zone)
+        val time = LocalTime.of(minutesOfDay / 60, minutesOfDay % 60)
+        var next = ZonedDateTime.of(now.toLocalDate(), time, zone)
+        if (!next.isAfter(now)) next = ZonedDateTime.of(now.toLocalDate().plusDays(1), time, zone)
         val delay = Duration.between(now, next).toMillis().coerceAtLeast(0)
         val request = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
             .build()
-        wm.enqueueUniqueWork(WORK, ExistingWorkPolicy.REPLACE, request)
+        wm.enqueueUniqueWork(WORK, policy, request)
     }
 
     fun ensureChannel(context: Context) {
@@ -75,7 +88,8 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
             val solvedToday = app.container.db.plays().dailies(today, today).count { it.solved }
             if (solvedToday < GameType.entries.size) notify(solvedToday)
         } finally {
-            Reminders.schedule(applicationContext, s.reminderEnabled, s.reminderMinutes)
+            // Queue tomorrow's run behind this one instead of cancelling the running worker.
+            Reminders.schedule(applicationContext, s.reminderEnabled, s.reminderMinutes, ExistingWorkPolicy.APPEND_OR_REPLACE)
         }
         return Result.success()
     }

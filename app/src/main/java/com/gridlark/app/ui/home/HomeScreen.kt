@@ -18,6 +18,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -135,11 +139,7 @@ fun HomeScreen(
         }
         items(GameType.entries, key = { "p-" + it.key }) { game ->
             val open = openPractice.firstOrNull { it.game == game.key }
-            PracticeRow(game, open) {
-                if (open != null) {
-                    onOpenPractice(game, runCatching { Difficulty.valueOf(open.difficulty) }.getOrDefault(Difficulty.MEDIUM), open.seed)
-                } else pickFor = game
-            }
+            PracticeRow(game, open) { pickFor = game }
             Hairline(Modifier.padding(start = 72.dp, end = 20.dp))
         }
         item {
@@ -153,8 +153,16 @@ fun HomeScreen(
     }
 
     pickFor?.let { game ->
+        val open = openPractice.firstOrNull { it.game == game.key }
         DifficultyDialog(
             game = game,
+            openDifficulty = open?.let { runCatching { Difficulty.valueOf(it.difficulty) }.getOrNull() },
+            onContinue = {
+                pickFor = null
+                if (open != null) {
+                    onOpenPractice(game, runCatching { Difficulty.valueOf(open.difficulty) }.getOrDefault(Difficulty.MEDIUM), open.seed)
+                }
+            },
             onPick = { d -> pickFor = null; onOpenPractice(game, d, null) },
             onDismiss = { pickFor = null },
         )
@@ -171,17 +179,16 @@ private fun StreakLine(current: Int, played: Set<Long>, today: LocalDate) {
         else -> "$current day streak"
     }
     val playedThisWeek = (0..6).count { monday.plusDays(it.toLong()).toEpochDay() in played }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clearAndSetSemantics { contentDescription = "$label. Played $playedThisWeek of 7 days this week." },
-    ) {
+    // Label above the week strip so it never collides at large font sizes.
+    Column(Modifier.clearAndSetSemantics { contentDescription = "$label. Played $playedThisWeek of 7 days this week." }) {
         Text(label, style = MaterialTheme.typography.titleSmall, color = c.ink)
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
         for (i in 0..6) {
             val d = monday.plusDays(i.toLong())
             val done = d.toEpochDay() in played
             val isToday = d == today
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(18.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(min = 22.dp).padding(end = 6.dp)) {
                 Text(d.weekdayLetter(), style = MaterialTheme.typography.labelSmall, color = if (isToday) c.ink else c.inkFaint)
                 Spacer(Modifier.height(2.dp))
                 Box(
@@ -190,6 +197,7 @@ private fun StreakLine(current: Int, played: Set<Long>, today: LocalDate) {
                         .background(if (done) c.ink else if (isToday) c.accent else c.rule, CircleShape),
                 )
             }
+        }
         }
     }
 }
@@ -253,14 +261,38 @@ private fun PracticeRow(game: GameType, open: PlayEntity?, onClick: () -> Unit) 
 }
 
 @Composable
-private fun DifficultyDialog(game: GameType, onPick: (Difficulty) -> Unit, onDismiss: () -> Unit) {
+private fun DifficultyDialog(
+    game: GameType,
+    openDifficulty: Difficulty?,
+    onContinue: () -> Unit,
+    onPick: (Difficulty) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val c = Grid.colors
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = c.surface,
         title = { Text(game.title, style = MaterialTheme.typography.titleLarge) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (openDifficulty != null) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .clickable(role = Role.Button, onClick = onContinue)
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Continue", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = c.ink)
+                            Text("Your ${openDifficulty.label().lowercase()} puzzle in progress", style = MaterialTheme.typography.bodySmall, color = c.inkMuted)
+                        }
+                        Icon(GridIcons.Chevron, null, tint = c.ink, modifier = Modifier.size(20.dp))
+                    }
+                    Hairline()
+                    Text("Or start a new one", style = MaterialTheme.typography.labelSmall, color = c.inkMuted, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+                }
                 Difficulty.entries.forEach { d ->
                     Row(
                         Modifier
@@ -290,9 +322,11 @@ private fun ReminderPrompt(container: AppContainer) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val minutes = 8 * 60
-    fun enable() = scope.launch {
+    // App scope: saving hides this prompt, which would cancel a screen-level scope mid-way.
+    val app = context.applicationContext
+    fun enable() = container.appScope.launch {
         container.settings.setReminder(true, minutes)
-        Reminders.schedule(context, true, minutes)
+        Reminders.schedule(app, true, minutes)
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) enable() else scope.launch { container.settings.setReminderPromptDone() }
@@ -311,7 +345,7 @@ private fun ReminderPrompt(container: AppContainer) {
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "One notification at 8:00 when new puzzles arrive. Skipped on days you've already played. Change it any time in Settings.",
+            "One notification at 8:00 while today's puzzles are unsolved. Change the time or turn it off in Settings.",
             style = MaterialTheme.typography.bodySmall,
             color = c.inkMuted,
         )

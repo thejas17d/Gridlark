@@ -19,6 +19,18 @@ val testRewarded = "ca-app-pub-3940256099942544/5224354917"
 val releaseAds = listOf("ADMOB_APP_ID", "ADMOB_BANNER_ID", "ADMOB_INTERSTITIAL_ID", "ADMOB_REWARDED_ID")
     .associateWith { config(it) }
 val hasRealAds = releaseAds.values.all { it != null }
+fun releaseAd(name: String, test: String): String = if (hasRealAds) releaseAds.getValue(name)!! else test
+
+// Store builds (CI sets REQUIRE_RELEASE_CONFIG=true on version tags) must never ship test ads,
+// a debug signature, or a placeholder support address.
+if (config("REQUIRE_RELEASE_CONFIG") == "true") {
+    val missing = buildList {
+        if (!hasRealAds) add("ADMOB_APP_ID / ADMOB_BANNER_ID / ADMOB_INTERSTITIAL_ID / ADMOB_REWARDED_ID")
+        if (config("KEYSTORE_FILE") == null) add("KEYSTORE_BASE64 (+ passwords)")
+        if (config("SUPPORT_EMAIL") == null) add("SUPPORT_EMAIL")
+    }
+    if (missing.isNotEmpty()) throw GradleException("Release build is missing: ${missing.joinToString(", ")}")
+}
 
 android {
     namespace = "com.gridlark.app"
@@ -66,10 +78,10 @@ android {
                 // No release keystore configured: sign with the debug key so the APK still installs for testing.
                 signingConfig = signingConfigs.getByName("debug")
             }
-            manifestPlaceholders["admobAppId"] = releaseAds["ADMOB_APP_ID"] ?: testAppId
-            buildConfigField("String", "AD_BANNER", "\"${releaseAds["ADMOB_BANNER_ID"] ?: testBanner}\"")
-            buildConfigField("String", "AD_INTERSTITIAL", "\"${releaseAds["ADMOB_INTERSTITIAL_ID"] ?: testInterstitial}\"")
-            buildConfigField("String", "AD_REWARDED", "\"${releaseAds["ADMOB_REWARDED_ID"] ?: testRewarded}\"")
+            manifestPlaceholders["admobAppId"] = releaseAd("ADMOB_APP_ID", testAppId)
+            buildConfigField("String", "AD_BANNER", "\"${releaseAd("ADMOB_BANNER_ID", testBanner)}\"")
+            buildConfigField("String", "AD_INTERSTITIAL", "\"${releaseAd("ADMOB_INTERSTITIAL_ID", testInterstitial)}\"")
+            buildConfigField("String", "AD_REWARDED", "\"${releaseAd("ADMOB_REWARDED_ID", testRewarded)}\"")
             buildConfigField("boolean", "TEST_ADS", (!hasRealAds).toString())
         }
     }

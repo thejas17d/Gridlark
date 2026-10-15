@@ -144,6 +144,8 @@ class PuzzleViewModel(private val container: AppContainer, val args: PuzzleArgs)
     }
 
     fun setPaused(paused: Boolean) {
+        // A gesture cut short by pausing still becomes one undo step.
+        if (paused && gestureSnapshot != null) commit()
         _ui.update { it.copy(paused = paused) }
         updateClock()
     }
@@ -241,6 +243,8 @@ class PuzzleViewModel(private val container: AppContainer, val args: PuzzleArgs)
 
     fun onDown(cell: Int) {
         if (!canEdit()) return
+        // Every gesture starts fresh: an interrupted earlier gesture must not merge into this one.
+        if (gestureSnapshot != null) commit()
         begin()
         val b = _ui.value.board
         if (b is TrailState) {
@@ -453,6 +457,8 @@ class PuzzleViewModel(private val container: AppContainer, val args: PuzzleArgs)
     /** Saves on the app scope so the write finishes even if the screen is closing. */
     private fun saveNow() {
         if (_ui.value.loading) return
+        // Opened and left untouched: don't create a row (keeps "In progress" and practice choices honest).
+        if (record == null && undo.isEmpty() && _ui.value.hintsUsed == 0) return
         saveJob?.cancel()
         container.appScope.launch { persist(solved = _ui.value.board?.solved == true) }
     }

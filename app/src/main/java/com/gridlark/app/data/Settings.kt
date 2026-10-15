@@ -2,6 +2,8 @@ package com.gridlark.app.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -11,10 +13,16 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.gridlark.app.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "settings",
+    // A corrupted file must never block start-up: fall back to defaults.
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+)
 
 data class UserSettings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
@@ -64,7 +72,11 @@ class SettingsRepository(private val context: Context) {
         val freeHintsUsed = intPreferencesKey("free_hints_used")
     }
 
-    val settings: Flow<UserSettings> = context.dataStore.data.map { p ->
+    private val safeData: Flow<Preferences> = context.dataStore.data.catch { e ->
+        if (e is IOException) emit(emptyPreferences()) else throw e
+    }
+
+    val settings: Flow<UserSettings> = safeData.map { p ->
         UserSettings(
             theme = p[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             haptics = p[Keys.haptics] ?: true,
@@ -108,7 +120,7 @@ class SettingsRepository(private val context: Context) {
     // --- ad and hint bookkeeping ---
 
     suspend fun counters(today: Long): AdCounters {
-        val p = context.dataStore.data.first()
+        val p = safeData.first()
         val first = p[Keys.firstOpenDay] ?: today.also { d -> context.dataStore.edit { it[Keys.firstOpenDay] = d } }
         return AdCounters(
             firstOpenEpochDay = first,
@@ -144,7 +156,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun freeHintsLeft(today: Long, perDay: Int): Int {
-        val p = context.dataStore.data.first()
+        val p = safeData.first()
         val day = p[Keys.freeHintDay] ?: -1L
         val used = if (day == today) p[Keys.freeHintsUsed] ?: 0 else 0
         return (perDay - used).coerceAtLeast(0)

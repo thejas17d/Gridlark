@@ -1254,24 +1254,24 @@ A new issue every morning. See you at the grid.</div></div>
 <!-- HANDOFF:START -->
 <section class="handoff" id="handoff">
 <h2>Context handoff</h2>
-<p><b>Last updated:</b> 2026-10-14 22:36 IST</p>
+<p><b>Last updated:</b> 2026-10-15 11:21 IST</p>
 <h3>Decision</h3>
 <p>App = <b>Gridlark</b>, an offline daily logic-puzzle collection (Crowns, Sun &amp; Moon, Trail, Sudoku). Chosen for best 2-year ad revenue: Tier-1 (US/UK/EU) organic demand from daily-puzzle habits, strong retention, zero server cost.</p>
 <h3>State</h3>
 <ul>
   <li>Research DONE (market/eCPM, competitors, UI/UX, stack). Summaries are in the sections above.</li>
-  <li>Engine DONE: <code>engine/</code> generators + logic solvers for Crowns, Sun &amp; Moon, Trail, Sudoku. Tests brute-force-verify uniqueness and determinism.</li>
-  <li>App DONE and compiling: Compose UI (Welcome, Today, Puzzle with 4 boards, Archive, Stats, Settings, Privacy/Licences), Room progress, DataStore settings, AdMob + UMP consent, Play Billing remove-ads, WorkManager reminder, in-app review.</li>
-  <li>Local verification PASSED: engine tests, app unit tests (BoardsTest 9, StreaksTest 17), lint 0 errors, debug + R8 release builds (release APK ~4.4 MB).</li>
-  <li>CI DONE: <code>.github/workflows/android.yml</code> builds and uploads <code>gridlark-debug-apk</code> and <code>gridlark-release</code> artifacts.</li>
-  <li>Docs DONE: this guide, README.md, docs/privacy.md, docs/app-ads.txt.</li>
+  <li>Engine DONE: <code>engine/</code> generators + logic solvers for Crowns, Sun &amp; Moon, Trail, Sudoku. Tests brute-force-verify uniqueness, determinism and pin daily seeds.</li>
+  <li>App DONE: Welcome, Today, Puzzle (4 boards), Archive, Stats, Settings, Privacy/Licences; Room, DataStore, AdMob + UMP, Play Billing remove-ads, WorkManager reminder, in-app review.</li>
+  <li>Independent code review DONE: all 21 findings fixed (reminder on cold start, double-back blank screen, rewarded opt-in, release guard, practice lock-in, TalkBack Trail, WAL backup, text caching, DataStore corruption, DST, refunds, consent once, banner lifecycle/spacing, API 26 nav bar, contrast, gesture undo, back on sheets, daily-calendar test).</li>
+  <li>Local verification PASSED (15 Oct): engine tests; app tests BoardsTest 9, StreaksTest 17, DailyCalendarTest (all 1,460 dailies for 365 days, slowest 0.49 s); lint 0 errors; debug + R8 release build (4.4 MB).</li>
+  <li>NOT DONE: emulator run. The system-image download was stopped by Claude Code because the PC was low on memory. Test on a real phone via the GitHub Actions APK.</li>
+  <li>Git: local repo in <code>Desktop/Dev/Gridlark</code> on branch main, committed, not pushed.</li>
 </ul>
 <h3>Next</h3>
 <ol>
-  <li>Emulator smoke test on Android 16 (system image downloading to <code>~/.android-toolchain/sdk</code>), screenshots, fix anything found.</li>
-  <li>Final code review pass (independent reviewer agent).</li>
-  <li>git init + first commit inside <code>Desktop/Dev/Gridlark</code>; owner pushes to GitHub (steps in the "Build &amp; test" section).</li>
-  <li>Owner tasks for launch: AdMob IDs, keystore secrets, Play Console listing (see "Going live").</li>
+  <li>Owner: create a GitHub repo and push (commands in "Build &amp; test"), download <code>gridlark-debug-apk</code>, install on a phone and play each game.</li>
+  <li>Owner: AdMob app + 3 ad units, release keystore, GitHub secrets, Play Console listing (see "Going live"). Tag <code>v1.0.0</code> to build a store bundle; the build refuses to run without real ad IDs, keystore and SUPPORT_EMAIL.</li>
+  <li>Optional later: run the emulator smoke test when RAM allows (<code>sdkmanager "system-images;android-36;google_apis;x86_64"</code>).</li>
 </ol>
 <h3>How to resume</h3>
 <pre># Local build (Java on this PC cannot reach services.gradle.org, so use the local Gradle):

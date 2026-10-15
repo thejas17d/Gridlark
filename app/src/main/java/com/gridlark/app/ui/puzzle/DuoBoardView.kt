@@ -111,7 +111,7 @@ fun DuoBoardView(
                 }
                 "Row ${i / n + 1}, column ${i % n + 1}, $v$fixed$bad$signs"
             },
-            onActivate = { callbacks.onTap(it) },
+            onActivate = { callbacks.onDown(it); callbacks.onTap(it) },
         )
     }
 }

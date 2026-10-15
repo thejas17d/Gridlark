@@ -44,6 +44,7 @@ class AdsManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val consent: ConsentInformation = UserMessagingPlatform.getConsentInformation(appContext)
     private val started = AtomicBoolean(false)
+    private val consentRequested = AtomicBoolean(false)
 
     private val _canShowAds = MutableStateFlow(false)
     /** True once consent allows ad requests and the SDK has started. */
@@ -64,6 +65,7 @@ class AdsManager(
                 adsRemoved = s.adsRemoved
                 if (s.adsRemoved) {
                     interstitial = null
+                    rewarded = null
                 }
             }
         }
@@ -71,11 +73,21 @@ class AdsManager(
 
     /** Call from the activity on every start. Shows the consent form only where the law requires it. */
     fun gatherConsent(activity: Activity) {
+        // A previous session may already allow requests; don't wait for the network.
+        startIfAllowed()
+        // Once per process: returning from an ad or another app must not re-run the network check.
+        if (!consentRequested.compareAndSet(false, true)) return
         val params = ConsentRequestParameters.Builder().build()
         consent.requestConsentInfoUpdate(
             activity,
             params,
             {
+                if (activity.isFinishing || activity.isDestroyed) {
+                    // The activity went away meanwhile; try again on the next start.
+                    consentRequested.set(false)
+                    startIfAllowed()
+                    return@requestConsentInfoUpdate
+                }
                 UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
                     if (error != null) Log.w(TAG, "Consent form: ${error.message}")
                     _privacyOptionsRequired.value =
@@ -86,11 +98,10 @@ class AdsManager(
             { error ->
                 // Offline or misconfigured: fall back to whatever consent was stored previously.
                 Log.w(TAG, "Consent update failed: ${error.message}")
+                consentRequested.set(false)
                 startIfAllowed()
             },
         )
-        // A previous session may already allow requests; don't wait for the network.
-        startIfAllowed()
     }
 
     fun showPrivacyOptions(activity: Activity, onDone: () -> Unit) {
@@ -119,8 +130,9 @@ class AdsManager(
     }
 
     fun preload() {
-        if (!_canShowAds.value) return
-        if (!adsRemoved) loadInterstitial()
+        // Players who removed ads get free hints, so they never need any ad loaded.
+        if (!_canShowAds.value || adsRemoved) return
+        loadInterstitial()
         loadRewarded()
     }
 

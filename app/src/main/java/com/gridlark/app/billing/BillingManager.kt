@@ -126,8 +126,9 @@ class BillingManager(context: Context, private val settings: SettingsRepository)
             }
             mine.any { it.purchaseState == Purchase.PurchaseState.PENDING } -> _status.value = Status.Pending
             fromQuery -> {
-                // Play says the player doesn't own it (e.g. refunded): reflect that.
+                // Play says the player doesn't own it (e.g. refunded): reflect that everywhere.
                 settings.setAdsRemoved(false)
+                if (_status.value is Status.Owned || _status.value is Status.Pending) _status.value = Status.Unavailable
             }
         }
     }

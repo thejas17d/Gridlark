@@ -2,6 +2,7 @@ package com.gridlark.app.ui.puzzle
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +46,19 @@ fun TrailBoardView(
     val pulse by rememberPulse(hintKey, reduceMotion)
     val measurer = rememberTextMeasurer()
     val onPath = remember(state) { state.path.toHashSet() }
-    Box(modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(6.dp))) {
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(6.dp))) {
+        val cellPx = constraints.maxWidth.toFloat() / n
+        val count = state.puzzle.checkpoints.size
+        val labels = remember(cellPx, count, c, density) {
+            val style = TextStyle(
+                fontFamily = UiFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = (cellPx * 0.34f / density.density / density.fontScale).sp,
+                color = c.paper,
+            )
+            List(count) { k -> measurer.measure((k + 1).toString(), style) }
+        }
         Canvas(Modifier.fillMaxSize().gridGestures(n, cb)) {
             val cell = size.width / n
             val thin = 1.dp.toPx()
@@ -82,17 +96,11 @@ fun TrailBoardView(
             }
 
             // Numbered stops.
-            val style = TextStyle(
-                fontFamily = UiFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = (cell * 0.34f / density / fontScale).sp,
-                color = c.paper,
-            )
             state.puzzle.checkpoints.forEachIndexed { k, i ->
                 val o = center(i)
                 drawCircle(c.ink, cell * 0.31f, o)
                 if (i in onPath) drawCircle(lineColor, cell * 0.31f, o, style = Stroke(2.5.dp.toPx()))
-                val layout = measurer.measure((k + 1).toString(), style)
+                val layout = labels[k]
                 drawText(layout, topLeft = Offset(o.x - layout.size.width / 2f, o.y - layout.size.height / 2f))
             }
 
@@ -121,7 +129,7 @@ fun TrailBoardView(
                 }
                 "Row ${i / n + 1}, column ${i % n + 1}, $label, $where"
             },
-            onActivate = { callbacks.onTap(it) },
+            onActivate = { callbacks.onDown(it); callbacks.onTap(it) },
         )
     }
 }
