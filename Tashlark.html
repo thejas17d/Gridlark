@@ -1,0 +1,1511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tashlark Build Book</title>
+<meta name="description" content="How Tashlark works, why it was chosen, how it earns, and every step from a GitHub push to a live Play Store listing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..125,300..800&family=Anek+Devanagari:wdth,wght@75..125,400..700&family=Anek+Bangla:wdth,wght@75..125,400..700&family=Tiro+Devanagari+Hindi&display=swap">
+<style>
+/* Kora & Neel. Undyed khadi cloth by day, indigo by night; turmeric, madder and neem as accents.
+   Tokens are copied from app/src/main/java/com/tashlark/app/ui/theme/Theme.kt.
+   Layout: a cloth "table" with a sticky index on the left and one paper reading panel on the right. */
+:root {
+  color-scheme: light;
+  --table: #D8CCB4;        /* khadi table */
+  --motif: #CDBFA3;        /* weave threads */
+  --panel: #F6F0E4;        /* paper panel */
+  --raised: #FBF7EE;       /* raised panel / card face */
+  --card-face: #FBF7EE;
+  --card-edge: #CDBFA6;
+  --card-back: #2B3A67;
+  --card-motif: #A63A2B;
+  --ink: #1F1A14;
+  --ink-muted: #5E554A;
+  --ink-faint: #8A7F70;
+  --card-ink: #1F1A14;
+  --haldi: #D99A1E;        /* turmeric */
+  --on-haldi: #1F1A14;
+  --haldi-text: #8A5C05;   /* turmeric dark enough for text on paper */
+  --haldi-wash: #F3E2B8;
+  --madder: #A63A2B;
+  --on-madder: #FBF7EE;
+  --neem: #3F6B4E;
+  --rule: #C4B597;
+  --rule-soft: #E3D9C4;
+  --shadow: rgba(31, 26, 20, .12);
+  /* suit inks on the paper face (Theme.kt suitColor) */
+  --s-spade: #1F1A14; --s-heart: #B8321F; --s-diamond: #B8321F; --s-club: #1F1A14;
+  --s4-diamond: #0B5FA5; --s4-club: #00775A;
+
+  --display: "Tiro Devanagari Hindi", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --body: "Anek Latin", "Anek Devanagari", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, Menlo, monospace;
+  --deva: "Anek Devanagari", "Nirmala UI", "Mangal", "Noto Sans Devanagari", sans-serif;
+  --bangla: "Anek Bangla", "Nirmala UI", "Vrinda", "Noto Sans Bengali", sans-serif;
+
+  --step--1: .84rem;
+  --step-0: 1.0rem;
+  --step-1: 1.2rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 3.4vw, 2.3rem);
+  --step-4: clamp(2.7rem, 7vw, 4.6rem);
+  --measure: 70ch;
+  --radius: 20px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --table: #18213A; --motif: #1F2A48; --panel: #222C47; --raised: #2A3554;
+    --card-face: #EEE7D8; --card-edge: #0E1426; --card-back: #2B3A67; --card-motif: #D2604C;
+    --ink: #F2ECE0; --ink-muted: #A9B0C4; --ink-faint: #7C849A; --card-ink: #1F1A14;
+    --haldi: #E8AE3A; --on-haldi: #18213A; --haldi-text: #E8AE3A; --haldi-wash: #3A3A3E;
+    --madder: #D2604C; --on-madder: #18213A; --neem: #7FB08F;
+    --rule: #34406A; --rule-soft: #2C3758; --shadow: rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --table: #18213A; --motif: #1F2A48; --panel: #222C47; --raised: #2A3554;
+  --card-face: #EEE7D8; --card-edge: #0E1426; --card-back: #2B3A67; --card-motif: #D2604C;
+  --ink: #F2ECE0; --ink-muted: #A9B0C4; --ink-faint: #7C849A; --card-ink: #1F1A14;
+  --haldi: #E8AE3A; --on-haldi: #18213A; --haldi-text: #E8AE3A; --haldi-wash: #3A3A3E;
+  --madder: #D2604C; --on-madder: #18213A; --neem: #7FB08F;
+  --rule: #34406A; --rule-soft: #2C3758; --shadow: rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.2rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--table);
+  /* A quiet khadi weave: two sets of hairline threads, no colour shift. */
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--motif) 55%, transparent) 3px 4px),
+    repeating-linear-gradient(90deg, transparent 0 5px, color-mix(in srgb, var(--motif) 35%, transparent) 5px 6px);
+  font: 400 var(--step-0)/1.62 var(--body);
+  font-variation-settings: "wdth" 100;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.page { max-width: 1280px; margin: 0 auto; padding-inline: max(16px, 3vw); padding-block: 0 4rem; }
+
+a { color: inherit; text-decoration-color: var(--madder); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+a:hover { color: var(--madder); }
+:focus-visible { outline: 2.5px solid var(--haldi); outline-offset: 2px; border-radius: 3px; }
+::selection { background: var(--haldi-wash); color: var(--ink); }
+
+/* ---------- Masthead ---------- */
+.masthead { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; align-items: end; padding-block: 2.6rem 1.6rem; }
+@media (max-width: 860px) { .masthead { grid-template-columns: minmax(0, 1fr); gap: 1.2rem; } }
+.kicker { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; font: 600 var(--step--1)/1.3 var(--body); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 .8rem; }
+.kicker b { color: var(--ink); }
+.wordmark { font: 400 var(--step-4)/0.95 var(--display); letter-spacing: -0.01em; margin: 0; }
+.wordmark .deva { font-family: var(--display); color: var(--madder); font-size: .5em; margin-left: .25em; vertical-align: .32em; }
+.standfirst { font: 400 var(--step-1)/1.5 var(--body); color: var(--ink-muted); max-width: 54ch; margin: 1rem 0 0; text-wrap: pretty; }
+.fan { display: block; width: 100%; max-width: 440px; height: auto; justify-self: end; overflow: visible; }
+@media (max-width: 860px) { .fan { justify-self: start; max-width: 340px; } }
+
+/* ---------- Layout ---------- */
+.layout { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 2.4rem; }
+@media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; } }
+
+/* ---------- Index ---------- */
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); align-self: start; max-height: calc(100vh - 2rem); overflow-y: auto; padding: .2rem .4rem 1rem 0; }
+.index h2 { font: 700 var(--step--1)/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin: .4rem 0 .7rem; }
+.index ol { list-style: none; margin: 0; padding: 0; }
+.index li { margin: 0; }
+.index a { display: grid; grid-template-columns: 1.9rem 1fr; align-items: center; gap: .55rem; padding: .32rem .5rem .32rem .25rem; text-decoration: none; color: var(--ink-muted); font-size: .93rem; line-height: 1.25; border-radius: 10px; }
+.index a:hover { color: var(--ink); background: color-mix(in srgb, var(--panel) 55%, transparent); }
+.index a .pip { display: grid; place-items: center; width: 1.6rem; height: 2.1rem; border-radius: 4px; background: var(--card-face); border: 1px solid var(--card-edge); color: var(--card-ink); font: 700 .74rem/1 var(--body); font-variation-settings: "wdth" 75; font-variant-numeric: tabular-nums; box-shadow: 0 1.5px 0 var(--shadow); }
+.index a.active { color: var(--ink); font-weight: 700; background: var(--panel); }
+.index a.active .pip { background: var(--haldi); border-color: var(--haldi); color: var(--on-haldi); }
+.index .legend { margin-top: 1.2rem; font-size: .8rem; color: var(--ink-muted); display: grid; gap: .4rem; }
+@media (max-width: 960px) {
+  .index { position: static; max-height: none; overflow: visible; background: var(--panel); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .index ol { columns: 2; column-gap: 1rem; }
+  .index li { break-inside: avoid; }
+}
+@media (max-width: 520px) { .index ol { columns: 1; } }
+
+/* ---------- Reading panel ---------- */
+main { min-width: 0; background: var(--panel); border-radius: var(--radius); box-shadow: 0 2px 0 var(--shadow), 0 0 0 1px color-mix(in srgb, var(--rule) 60%, transparent); padding: clamp(1.1rem, 3.2vw, 2.8rem); }
+section.chapter { padding-block: 2.6rem 1.2rem; border-top: 1px dashed var(--rule); }
+section.chapter:first-child { border-top: 0; padding-top: .2rem; }
+.eyebrow { display: flex; align-items: center; gap: .55rem; font: 700 var(--step--1)/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--madder); margin: 0 0 .7rem; }
+.eyebrow svg { width: .95rem; height: .95rem; flex: none; }
+h2.h { font: 400 var(--step-3)/1.12 var(--display); margin: 0 0 1rem; text-wrap: balance; max-width: 28ch; }
+h3 { font: 400 var(--step-2)/1.2 var(--display); margin: 2.1rem 0 .6rem; text-wrap: balance; }
+h4 { font: 700 var(--step-0)/1.3 var(--body); margin: 1.4rem 0 .4rem; }
+p, ul, ol, dl { max-width: var(--measure); }
+p { margin: 0 0 1rem; text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; margin: 0 0 1rem; }
+li { margin-bottom: .35rem; }
+li::marker { color: var(--ink-faint); }
+.lede { font: 400 var(--step-1)/1.55 var(--body); max-width: 64ch; }
+strong, b { font-weight: 700; }
+small, .fine { font-size: var(--step--1); color: var(--ink-muted); }
+code { font: 500 .86em/1.4 var(--mono); background: color-mix(in srgb, var(--table) 45%, var(--panel)); padding: .08em .34em; border-radius: 4px; overflow-wrap: anywhere; }
+kbd { font: 500 .85em var(--mono); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 .3em; background: var(--raised); }
+
+/* Status chips: words and border style carry the meaning, not colour alone. */
+.chip { display: inline-block; font: 700 .68rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; padding: .3em .55em .26em; border-radius: 999px; border: 1.3px solid currentColor; vertical-align: .14em; white-space: nowrap; }
+.chip.built { color: var(--neem); }
+.chip.est { color: var(--haldi-text); border-style: dashed; }
+.chip.plan { color: var(--ink-muted); border-style: dotted; }
+.chip.verify { color: var(--madder); }
+
+/* Code */
+.code { position: relative; margin: 0 0 1.2rem; max-width: 100%; }
+.code pre { margin: 0; background: var(--raised); border: 1px solid var(--rule-soft); border-left: 4px solid var(--card-back); border-radius: 10px; padding: .9rem 1rem 2.2rem; overflow-x: auto; font: 400 .85rem/1.58 var(--mono); color: var(--ink); tab-size: 2; }
+.code pre code { background: none; padding: 0; font: inherit; }
+.code .label { display: block; font: 700 .7rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: .4rem; }
+.copy { position: absolute; right: .5rem; bottom: .5rem; font: 700 .74rem/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); padding: .4rem .65rem; border-radius: 999px; cursor: pointer; }
+.copy:hover { border-color: var(--ink); }
+.c-com { color: var(--ink-faint); }
+pre.tree { background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 10px; padding: 1rem 1.1rem; overflow-x: auto; font: 400 .82rem/1.6 var(--mono); margin: 0 0 1.2rem; }
+pre.tree .c-com { color: var(--ink-muted); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 0 0 1.4rem; max-width: 100%; border-radius: 12px; border: 1px solid var(--rule-soft); background: var(--raised); }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: .6rem .85rem; border-bottom: 1px solid var(--rule-soft); }
+tbody tr:last-child td { border-bottom: 0; }
+th { font: 700 .72rem/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); background: color-mix(in srgb, var(--table) 30%, var(--raised)); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.pick td { background: color-mix(in srgb, var(--haldi) 16%, var(--raised)); }
+tr.pick td:first-child { box-shadow: inset 4px 0 0 var(--haldi); }
+caption { caption-side: bottom; text-align: left; font-size: var(--step--1); color: var(--ink-muted); padding: .6rem .85rem; }
+td code { white-space: nowrap; }
+
+/* Notes */
+.note { border-left: 4px solid var(--haldi); background: color-mix(in srgb, var(--haldi) 9%, var(--panel)); border-radius: 0 12px 12px 0; padding: .75rem 1rem; margin: 0 0 1.2rem; max-width: var(--measure); }
+.note p:last-child, .note ul:last-child { margin-bottom: 0; }
+.note.warn { border-left-color: var(--madder); background: color-mix(in srgb, var(--madder) 8%, var(--panel)); }
+.note.good { border-left-color: var(--neem); background: color-mix(in srgb, var(--neem) 9%, var(--panel)); }
+
+/* Game spreads */
+.games { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; margin: 1.6rem 0 1.4rem; }
+@media (max-width: 1120px) { .games { grid-template-columns: minmax(0, 1fr); } }
+.game { background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 16px; padding: 1.1rem 1.2rem 1rem; display: grid; grid-template-columns: 5.4rem minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 420px) { .game { grid-template-columns: minmax(0, 1fr); } }
+.game h3 { margin: 0 0 .15rem; font-size: 1.45rem; }
+.game .tag { font-size: .9rem; color: var(--ink-muted); margin: 0 0 .6rem; }
+.game p, .game li { font-size: .92rem; }
+.game ul { padding-left: 1.1rem; margin-bottom: .6rem; }
+.game .meta { font: 500 .78rem/1.45 var(--mono); color: var(--ink-muted); margin: .4rem 0 0; }
+.game svg { width: 100%; max-width: 5.4rem; height: auto; display: block; }
+
+/* Figures and diagrams */
+figure { margin: 1.4rem 0 1.8rem; }
+figcaption { font-size: var(--step--1); color: var(--ink-muted); margin-top: .6rem; max-width: var(--measure); }
+.diagram { overflow-x: auto; background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 14px; padding: .8rem; }
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.dg-frame { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.dg-frame.dash { stroke-dasharray: 6 4; }
+.dg-box { fill: var(--panel); stroke: var(--ink); stroke-width: 1.1; }
+.dg-box.hot { fill: color-mix(in srgb, var(--haldi) 22%, var(--panel)); stroke: var(--haldi-text); }
+.dg-box.quiet { fill: color-mix(in srgb, var(--table) 40%, var(--panel)); stroke: var(--rule); }
+.dg-box.indigo { fill: color-mix(in srgb, var(--card-back) 14%, var(--panel)); stroke: var(--card-back); }
+.dg-box.neem { fill: color-mix(in srgb, var(--neem) 14%, var(--panel)); stroke: var(--neem); }
+.dg-box.madder { fill: color-mix(in srgb, var(--madder) 10%, var(--panel)); stroke: var(--madder); }
+.dg-sep { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 3 3; }
+.dg-t { fill: var(--ink); font: 700 12.5px var(--body); }
+.dg-s { fill: var(--ink-muted); font: 400 11px var(--body); }
+.dg-m { fill: var(--ink-muted); font: 500 10.5px var(--mono); }
+.dg-big { fill: var(--ink); font: 400 17px var(--display); }
+.dg-lab { fill: var(--madder); font: 700 10px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.dg-n { fill: var(--on-haldi); font: 700 11px var(--body); text-anchor: middle; }
+.dg-nb { fill: var(--haldi); }
+.dg-a { fill: none; stroke: var(--ink); stroke-width: 1.3; }
+.dg-a.acc { stroke: var(--madder); }
+.dg-a.dash { stroke-dasharray: 4 3; }
+.dg-ah { fill: var(--ink); }
+.dg-ah.acc { fill: var(--madder); }
+
+/* Cards drawn in SVG (same geometry as ui/cards/CardArt.kt) */
+.cf { fill: var(--card-face); stroke: var(--card-edge); stroke-width: 1; }
+.csh { fill: var(--shadow); }
+.cb { fill: var(--card-back); }
+.cbm { fill: var(--card-motif); }
+.cbs { fill: none; stroke: var(--card-motif); }
+.ink-s { fill: var(--s-spade); } .ink-h { fill: var(--s-heart); } .ink-d { fill: var(--s-diamond); } .ink-c { fill: var(--s-club); }
+.ink-d4 { fill: var(--s4-diamond); } .ink-c4 { fill: var(--s4-club); }
+.rank { font: 700 15px var(--body); font-variation-settings: "wdth" 75; }
+.court { font: 400 26px var(--display); }
+
+/* Swatches */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .8rem 1rem; margin: 1rem 0 1.4rem; }
+.sw { display: grid; grid-template-columns: 2.6rem 1fr; gap: .65rem; align-items: center; font-size: .82rem; line-height: 1.3; }
+.sw i { display: block; width: 2.6rem; height: 3.6rem; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+.sw b { display: block; font-weight: 700; }
+.sw span { font: 500 .74rem var(--mono); color: var(--ink-muted); }
+
+/* Type specimen */
+.specimen { display: grid; gap: .9rem; margin: 1rem 0 1.4rem; background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 14px; padding: 1rem 1.1rem; }
+.specimen div { display: grid; grid-template-columns: 10rem 1fr; gap: 1rem; align-items: baseline; }
+@media (max-width: 560px) { .specimen div { grid-template-columns: 1fr; gap: .2rem; } }
+.specimen small { font: 500 .74rem/1.3 var(--mono); color: var(--ink-muted); }
+.sp-display { font: 400 2.1rem/1.15 var(--display); }
+.sp-deva { font: 400 1.8rem/1.3 var(--display); }
+.sp-ui { font: 400 1.05rem/1.4 var(--body); }
+.sp-index { font: 700 1.6rem/1 var(--body); font-variation-settings: "wdth" 75; letter-spacing: .02em; }
+
+/* Checklist */
+.checklist { list-style: none; padding: 0; max-width: var(--measure); }
+.checklist > li { display: grid; grid-template-columns: 1.7rem minmax(0, 1fr); gap: .5rem; padding: .9rem 1rem; margin: 0 0 .6rem; background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 14px; }
+.checklist input { width: 1.15rem; height: 1.15rem; margin: .22rem 0 0; accent-color: var(--neem); }
+.checklist label { font-weight: 700; cursor: pointer; }
+.checklist .body { min-width: 0; }
+.checklist .body > *:last-child { margin-bottom: 0; }
+.checklist .body p, .checklist .body ul, .checklist .body ol { margin: .4rem 0 .6rem; }
+.checklist li.done { background: color-mix(in srgb, var(--neem) 7%, var(--raised)); }
+.checklist li.done label { text-decoration: line-through; text-decoration-color: var(--ink-faint); color: var(--ink-muted); }
+.progress { font: 600 .82rem var(--body); color: var(--ink-muted); margin: 0 0 .7rem; display: flex; align-items: center; gap: .7rem; }
+.bar { flex: 0 1 14rem; height: 6px; border-radius: 99px; background: var(--rule-soft); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--neem); transition: width .25s; }
+
+/* Steps */
+.steps { counter-reset: s; list-style: none; padding: 0; max-width: var(--measure); }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: .7rem; margin: 0 0 1.4rem; }
+.steps > li::before { content: counter(s); display: grid; place-items: center; width: 2rem; height: 2.7rem; border-radius: 5px; background: var(--card-face); border: 1px solid var(--card-edge); color: var(--madder); font: 700 1.05rem/1 var(--body); font-variation-settings: "wdth" 75; box-shadow: 0 1.5px 0 var(--shadow); }
+.steps > li > div { min-width: 0; }
+.steps h4 { margin-top: .35rem; }
+
+/* Listing kit */
+.listing { max-width: var(--measure); background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 14px; padding: 0 1.1rem; margin-bottom: 1.2rem; }
+.field { padding: .95rem 0; border-bottom: 1px solid var(--rule-soft); }
+.field:last-child { border-bottom: 0; }
+.field header { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: .35rem; }
+.field header b { font: 700 .72rem/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.count { font: 600 .78rem var(--mono); color: var(--neem); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count.over { color: var(--madder); }
+.field .text { white-space: pre-wrap; font-size: .95rem; }
+.field .text.big { font: 400 1.35rem/1.3 var(--display); }
+.field .text[lang="hi"], .field .text[lang="ne"] { font-family: var(--deva); }
+.field .text[lang="bn"] { font-family: var(--bangla); }
+.field .text.big[lang="hi"], .field .text.big[lang="ne"] { font-family: var(--display); }
+
+dl.defs { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .5rem 1.2rem; }
+dl.defs dt { font-weight: 700; }
+dl.defs dd { margin: 0; }
+@media (max-width: 560px) { dl.defs { grid-template-columns: minmax(0, 1fr); } dl.defs dd { margin-bottom: .6rem; } }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0 2.2rem; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .8rem; margin: 1.2rem 0 1.4rem; }
+.kpi { background: var(--raised); border: 1px solid var(--rule-soft); border-radius: 14px; padding: .85rem 1rem; }
+.kpi b { display: block; font: 400 1.75rem/1.1 var(--display); }
+.kpi span { font-size: .82rem; color: var(--ink-muted); }
+
+/* Geo bar */
+.geo { display: flex; height: 2.2rem; border-radius: 10px; overflow: hidden; margin: .6rem 0 .5rem; max-width: 640px; border: 1px solid var(--rule-soft); }
+.geo i { display: grid; place-items: center; font: 700 .72rem/1 var(--body); color: var(--on-madder); font-style: normal; white-space: nowrap; overflow: hidden; }
+.geo-legend { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; font-size: .84rem; color: var(--ink-muted); margin-bottom: 1.2rem; }
+.geo-legend span::before { content: ""; display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -.05rem; background: var(--c); }
+
+.sources { font-size: .9rem; }
+.sources li { overflow-wrap: anywhere; }
+
+/* ---------- Preserved handoff block (restyled only; markup is untouched) ---------- */
+.handoff { border: 0; background: var(--card-back); color: #F2ECE0; border-radius: var(--radius); padding: 1.3rem 1.5rem 1.1rem; margin: 0; max-width: 100%; box-shadow: inset 0 0 0 6px var(--card-back), inset 0 0 0 7px color-mix(in srgb, var(--card-motif) 80%, transparent); font-family: var(--body); }
+.handoff h2 { font: 400 var(--step-2)/1.15 var(--display); margin: .2rem 0 .6rem; color: #F2ECE0; }
+.handoff h3 { font: 700 .76rem/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: #E8AE3A; margin: 1.3rem 0 .5rem; }
+.handoff p, .handoff ul, .handoff ol { font-size: .95rem; max-width: 80ch; }
+.handoff li::marker { color: #E8AE3A; }
+.handoff b { color: #FFFFFF; }
+.handoff pre { background: rgba(0, 0, 0, .28); color: #F2ECE0; border-left: 4px solid #E8AE3A; border-radius: 8px; padding: .85rem 1rem; overflow-x: auto; font: 400 .84rem/1.55 var(--mono); }
+.handoff code { background: rgba(0, 0, 0, .25); color: #F2ECE0; font-family: var(--mono); }
+.handoff pre code { background: none; }
+
+.colophon { margin-top: 2rem; padding: 1rem .2rem 0; font-size: var(--step--1); color: var(--ink-muted); display: flex; flex-wrap: wrap; gap: .4rem 1.6rem; }
+
+@media print {
+  body { background: #fff; }
+  .index, .copy { display: none; }
+  .layout { grid-template-columns: 1fr; }
+  main { box-shadow: none; padding: 0; }
+}
+</style>
+</head>
+<body>
+<!-- Suit shapes: the same paths as suitPath() in ui/cards/CardArt.kt, on a 100 x 100 box. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="s-h" viewBox="0 0 100 100"><path d="M50,95 C5,62 -2,18 27,8 C40,4 48,14 50,24 C52,14 60,4 73,8 C102,18 95,62 50,95 Z"/></symbol>
+    <symbol id="s-d" viewBox="0 0 100 100"><path d="M50,0 Q70,28 95,50 Q70,72 50,100 Q30,72 5,50 Q30,28 50,0 Z"/></symbol>
+    <symbol id="s-s" viewBox="0 0 100 100"><path d="M50,2 C62,20 100,38 95,60 C90,80 62,80 54,68 L64,98 L36,98 L46,68 C38,80 10,80 5,60 C0,38 38,20 50,2 Z"/></symbol>
+    <symbol id="s-c" viewBox="0 0 100 100"><circle cx="50" cy="25" r="23"/><circle cx="26" cy="56" r="23"/><circle cx="74" cy="56" r="23"/><path d="M46,45 L54,45 L64,98 L36,98 Z"/></symbol>
+    <!-- One ganjifa petal for a 70 x 98 card back, centred on (35,49). -->
+    <path id="petal" d="M35,36.68 Q38.58,31.53 35,27.05 Q31.42,31.53 35,36.68 Z"/>
+    <!-- Reusable card back, 70 x 98 -->
+    <g id="cardback">
+      <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/>
+      <rect class="cb" x="0" y="0" width="70" height="98" rx="5"/>
+      <rect class="cbs" x="4.9" y="4.9" width="60.2" height="88.2" rx="3.5" stroke-width="1" opacity=".85"/>
+      <circle class="cbs" cx="35" cy="49" r="22.4" stroke-width="1.5"/>
+      <circle class="cbs" cx="35" cy="49" r="12.3" stroke-width="1"/>
+      <use href="#petal" class="cbm"/>
+      <use href="#petal" class="cbm" transform="rotate(45 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(90 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(135 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(180 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(225 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(270 35 49)"/>
+      <use href="#petal" class="cbm" transform="rotate(315 35 49)"/>
+      <circle class="cbm" cx="35" cy="49" r="3.1"/>
+    </g>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-ah acc" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+</svg>
+
+<div class="page">
+
+<header class="masthead">
+  <div>
+    <p class="kicker"><span><b>The build book</b></span><span>15 October 2026</span><span>For the owner, who builds without Android Studio</span></p>
+    <h1 class="wordmark">Tashlark<span class="deva" lang="hi">ताश</span></h1>
+    <p class="standfirst">Four Indian trick-taking card games against thoughtful computer players, offline. What the app is, why it was chosen, how it earns, how every part works, and every step from a GitHub push to a live Play Store listing.</p>
+  </div>
+  <!-- A fan of four cards: ace of spades, ten of hearts, king of diamonds, and a ganjifa back. -->
+  <svg class="fan" viewBox="-20 -16 360 150" role="img" aria-label="Four Tashlark cards fanned out: ace of spades, ten of hearts, king of diamonds and the round ganjifa card back.">
+    <g transform="translate(20 30) rotate(-14 35 98)">
+      <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+      <text class="rank ink-s" x="11" y="18" text-anchor="middle">A</text><use href="#s-s" class="ink-s" x="4.9" y="20.5" width="14" height="14"/>
+      <g transform="rotate(180 35 49)"><text class="rank ink-s" x="11" y="18" text-anchor="middle">A</text><use href="#s-s" class="ink-s" x="4.9" y="20.5" width="14" height="14"/></g>
+      <use href="#s-s" class="ink-s" x="17.5" y="31.5" width="35" height="35"/>
+    </g>
+    <g transform="translate(95 10) rotate(-5 35 98)">
+      <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+      <text class="rank ink-h" x="11" y="18" text-anchor="middle">10</text><use href="#s-h" class="ink-h" x="4.9" y="20.5" width="14" height="14"/>
+      <g transform="rotate(180 35 49)"><text class="rank ink-h" x="11" y="18" text-anchor="middle">10</text><use href="#s-h" class="ink-h" x="4.9" y="20.5" width="14" height="14"/></g>
+      <use href="#s-h" class="ink-h" x="21" y="35" width="28" height="28"/>
+    </g>
+    <g transform="translate(170 10) rotate(5 35 98)">
+      <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+      <text class="rank ink-d" x="11" y="18" text-anchor="middle">K</text><use href="#s-d" class="ink-d" x="4.9" y="20.5" width="14" height="14"/>
+      <g transform="rotate(180 35 49)"><text class="rank ink-d" x="11" y="18" text-anchor="middle">K</text><use href="#s-d" class="ink-d" x="4.9" y="20.5" width="14" height="14"/></g>
+      <circle cx="35" cy="49" r="21" class="ink-d" opacity=".1"/><circle cx="35" cy="49" r="21" fill="none" stroke="var(--s-diamond)" stroke-width="1.5"/>
+      <text class="court ink-d" x="35" y="52" text-anchor="middle">K</text>
+      <use href="#s-d" class="ink-d" x="30.45" y="57" width="9.1" height="9.1"/>
+    </g>
+    <g transform="translate(245 30) rotate(14 35 98)"><use href="#cardback"/></g>
+  </svg>
+</header>
+
+<div class="layout">
+
+<nav class="index" aria-label="Contents">
+  <h2>The deal</h2>
+  <ol>
+    <li><a href="#what"><span class="pip">01</span><span>What Tashlark is</span></a></li>
+    <li><a href="#why"><span class="pip">02</span><span>Why this app</span></a></li>
+    <li><a href="#money"><span class="pip">03</span><span>How it makes money</span></a></li>
+    <li><a href="#stack"><span class="pip">04</span><span>Tech stack</span></a></li>
+    <li><a href="#architecture"><span class="pip">05</span><span>Architecture</span></a></li>
+    <li><a href="#engine"><span class="pip">06</span><span>Engine deep-dive</span></a></li>
+    <li><a href="#design"><span class="pip">07</span><span>Design system</span></a></li>
+    <li><a href="#build"><span class="pip">08</span><span>Build with GitHub Actions</span></a></li>
+    <li><a href="#live"><span class="pip">09</span><span>Going live (India)</span></a></li>
+    <li><a href="#listing"><span class="pip">10</span><span>Store listing kit</span></a></li>
+    <li><a href="#roadmap"><span class="pip">11</span><span>Roadmap</span></a></li>
+    <li><a href="#risks"><span class="pip">12</span><span>Risks</span></a></li>
+    <li><a href="#sources"><span class="pip">13</span><span>Sources</span></a></li>
+    <li><a href="#handoff"><span class="pip">14</span><span>Context handoff</span></a></li>
+  </ol>
+  <div class="legend">
+    <div><span class="chip built">Built</span> in the code today</div>
+    <div><span class="chip est">Estimate</span> a modelled number</div>
+    <div><span class="chip plan">Planned</span> not built yet</div>
+    <div><span class="chip verify">Verify</span> check before relying on it</div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================================================ 1 -->
+<section class="chapter" id="what">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-s" fill="currentColor"/></svg>01 · The product</p>
+  <h2 class="h">What Tashlark is</h2>
+  <p class="lede">Tashlark (from <i lang="hi">taash</i>, Hindi for playing cards) is an offline Android app that bundles four South Asian trick-taking card games: <strong>Call Break</strong>, <strong>29</strong>, <strong>Court Piece</strong> and <strong>Mendikot</strong>. You play against three computer players who think about the cards they can see, never the ones they can't. There is no account, no server, no coins, chips or betting. It earns from considerate ads between matches and a one-time "Remove ads" purchase.</p>
+
+  <p>You always sit at the bottom of the table. The computer players are <strong>Asha</strong>, <strong>Ravi</strong> and <strong>Meera</strong>; in the three partnership games Ravi sits opposite and is your partner. Seating is drawn anticlockwise by default (the traditional direction), with a clockwise option. Matches save after every single card, so closing the app, a phone call or the system killing the app never loses a game.</p>
+
+  <div class="games">
+    <article class="game">
+      <svg viewBox="-2 -2 74 104" role="img" aria-label="Ace of spades">
+        <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+        <text class="rank ink-s" x="11" y="18" text-anchor="middle">A</text><use href="#s-s" class="ink-s" x="4.9" y="20.5" width="14" height="14"/>
+        <g transform="rotate(180 35 49)"><text class="rank ink-s" x="11" y="18" text-anchor="middle">A</text><use href="#s-s" class="ink-s" x="4.9" y="20.5" width="14" height="14"/></g>
+        <use href="#s-s" class="ink-s" x="17.5" y="31.5" width="35" height="35"/>
+      </svg>
+      <div>
+        <h3>Call Break</h3>
+        <p class="tag">Bid your tricks, spades always trump.</p>
+        <ul>
+          <li>Four players, each for themselves. All 52 cards, 13 each. Spades are always trump.</li>
+          <li>Everyone bids how many tricks they will take (1 to 13).</li>
+          <li>Follow suit, and beat the best card on the trick if you can. Out of the led suit? You must play a spade, higher than any spade already played if you can. No spades: play anything.</li>
+          <li>Make your bid: score the bid plus 0.1 per extra trick (bid 3, take 5 = 3.2). Fall short: lose the bid.</li>
+          <li>Any hand without a spade is redealt.</li>
+        </ul>
+        <p class="meta">Defaults: must-beat on · highest bid 13 (or 8) · 5 rounds (or 10) · about 12 min</p>
+      </div>
+    </article>
+
+    <article class="game">
+      <svg viewBox="-2 -2 74 104" role="img" aria-label="Jack of clubs">
+        <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+        <text class="rank ink-c" x="11" y="18" text-anchor="middle">J</text><use href="#s-c" class="ink-c" x="4.9" y="20.5" width="14" height="14"/>
+        <g transform="rotate(180 35 49)"><text class="rank ink-c" x="11" y="18" text-anchor="middle">J</text><use href="#s-c" class="ink-c" x="4.9" y="20.5" width="14" height="14"/></g>
+        <circle cx="35" cy="49" r="21" class="ink-c" opacity=".1"/><circle cx="35" cy="49" r="21" fill="none" stroke="var(--s-club)" stroke-width="1.5"/>
+        <text class="court ink-c" x="35" y="52" text-anchor="middle">J</text>
+        <use href="#s-c" class="ink-c" x="30.45" y="57" width="9.1" height="9.1"/>
+      </svg>
+      <div>
+        <h3>29</h3>
+        <p class="tag">Bid for points, hide the trump, find the pair.</p>
+        <ul>
+          <li>Two partnerships, 32 cards (7 to ace). Rank in every suit: <strong>J 9 A 10 K Q 8 7</strong>. Jacks score 3, nines 2, aces and tens 1: 28 points in the deck.</li>
+          <li>Four cards each, then an auction from 16 to 28. Passing is final; if the first three pass, the last player must bid 16.</li>
+          <li>The winning bidder hides one card face down: its suit is the secret trump. Defenders may double, the bidder may redouble, then four more cards each.</li>
+          <li>Until trump is shown, the highest card of the led suit wins, and the bidder may not lead trump unless holding nothing else. A player who can't follow may ask to see trump; from then on trumps count, even in the trick being played, and the asker must trump if able.</li>
+          <li>Pair: once trump is shown, a side holding the king and queen of trump that then wins a trick moves the target by 4 (down if it is the bidders, up if it is the defenders, kept within 16 to 28).</li>
+          <li>Bidders reach the target: +1 game point (2 doubled, 4 redoubled); otherwise −1. If trump is never asked for, the hand is replayed.</li>
+        </ul>
+        <p class="meta">Defaults: pair on · double/redouble on · last-trick point off · first to +6 (or −6 loses) · about 15 min</p>
+      </div>
+    </article>
+
+    <article class="game">
+      <svg viewBox="-2 -2 74 104" role="img" aria-label="King of hearts">
+        <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+        <text class="rank ink-h" x="11" y="18" text-anchor="middle">K</text><use href="#s-h" class="ink-h" x="4.9" y="20.5" width="14" height="14"/>
+        <g transform="rotate(180 35 49)"><text class="rank ink-h" x="11" y="18" text-anchor="middle">K</text><use href="#s-h" class="ink-h" x="4.9" y="20.5" width="14" height="14"/></g>
+        <circle cx="35" cy="49" r="21" class="ink-h" opacity=".1"/><circle cx="35" cy="49" r="21" fill="none" stroke="var(--s-heart)" stroke-width="1.5"/>
+        <text class="court ink-h" x="35" y="52" text-anchor="middle">K</text>
+        <use href="#s-h" class="ink-h" x="30.45" y="57" width="9.1" height="9.1"/>
+      </svg>
+      <div>
+        <h3>Court Piece</h3>
+        <p class="tag">Call trump from five cards, go for a court. Also known as Rang or Hokm.</p>
+        <ul>
+          <li>Two partnerships, all 52 cards, aces high.</li>
+          <li>Five cards each first. The player after the dealer is the caller and names trump from those five; then eight more each. A caller with no jack or higher in the five gets a redeal.</li>
+          <li>The caller leads. Follow suit if you can, otherwise play anything. You never have to trump.</li>
+          <li>The hand ends when a team has 7 tricks. Callers win: 1 point, or 3 for a court (the first 7 tricks). Opponents win: 2 points, or 4 for a "goon court".</li>
+          <li>Dealer's team wins: the deal moves on. Callers win: same dealer; after a callers' court the dealer's partner deals.</li>
+        </ul>
+        <p class="meta">Defaults: first to 10 (or 5, 15, 20) · about 15 min</p>
+      </div>
+    </article>
+
+    <article class="game">
+      <svg viewBox="-2 -2 74 104" role="img" aria-label="Ten of diamonds">
+        <rect class="csh" x="0" y="2" width="70" height="98" rx="5"/><rect class="cf" width="70" height="98" rx="5"/>
+        <text class="rank ink-d" x="11" y="18" text-anchor="middle">10</text><use href="#s-d" class="ink-d" x="4.9" y="20.5" width="14" height="14"/>
+        <g transform="rotate(180 35 49)"><text class="rank ink-d" x="11" y="18" text-anchor="middle">10</text><use href="#s-d" class="ink-d" x="4.9" y="20.5" width="14" height="14"/></g>
+        <use href="#s-d" class="ink-d" x="21" y="35" width="28" height="28"/>
+      </svg>
+      <div>
+        <h3>Mendikot</h3>
+        <p class="tag">Capture the tens with your partner. Also spelt Mindi or Mendicot.</p>
+        <ul>
+          <li>Two partnerships, 52 cards, 13 each, aces high. The team that captures three or four tens wins the hand; at two tens each, the team with seven or more tricks wins.</li>
+          <li><strong>Hidden trump (band hukum, default):</strong> the player after the dealer lays one card face down and plays from the other twelve. A player who can't follow may ask to reveal it; the card goes back to its owner, its suit is trump from then on, the asker must play a trump if they have one, and trumps played earlier in that trick don't count.</li>
+          <li><strong>Cut trump (cut hukum, option):</strong> no trump at first; the first card played by someone who can't follow names trump for the rest of the hand.</li>
+          <li>Scoring with bonuses (default): a won hand 1, a <em>mendikot</em> (all four tens) 2, a whitewash (all 13 tricks) 3. Without bonuses every win is 1.</li>
+        </ul>
+        <p class="meta">Defaults: hidden trump · bonuses on · first to 5 (or 3, 7) · about 15 min</p>
+      </div>
+    </article>
+  </div>
+
+  <h3>What you see in the app</h3>
+  <dl class="defs">
+    <dt>Welcome</dt><dd>First launch only. Introduces the four games and asks two questions: how quickly the computer players should move (Relaxed, Normal, Fast) and how strong they should be (Easy, Medium, Hard). Both can be changed later.</dd>
+    <dt>Home</dt><dd>"Deal a hand": one tile per game with its tagline, players and match length, plus "Continue …" for any saved match. A banner ad may sit at the bottom.</dd>
+    <dt>The table</dt><dd>Seat chips around a central trick, a score strip, the trump badge, one line of guidance ("Your turn", "Bid more than 18, or pass", "You must follow ♥"), decision panels for bids, trump, doubling and reveal, and your hand at the bottom. The top bar has <strong>Suggest a move</strong> (a hint with a reason), and a menu with Rules, Last trick and Abandon match. No ads, ever.</dd>
+    <dt>Result sheet</dt><dd>After each hand: who scored what and why, then standings. "Next round" or, at the end, "Play again" and "Home", plus an optional "Watch a short ad for an hour without ads".</dd>
+    <dt>Stats</dt><dd>Per game: played, won, win percentage (rounded so it never shows 100% unless every match was won), current and best win streaks, and recent matches. Matches where you used hints are marked as assisted.</dd>
+    <dt>Settings</dt><dd>Theme, four-colour deck, card size, play speed, seating direction, one-tap play, reduce motion, haptics, computer skill, house rules for each game, Remove ads and Restore purchase, Clear match history, Privacy policy, Ad privacy choices (where the law requires them) and Open-source licences.</dd>
+  </dl>
+
+  <div class="note good"><p><strong>What Tashlark deliberately is not:</strong> no real money, no coins or chips, no "bet" or "win cash" language, no online multiplayer, no account, no analytics, and no sound or music at all. Card players in this genre complain loudly about rigged opponents, ad spam and noise; Tashlark's answer to each is in section 02.</p></div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="chapter" id="why">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-h" fill="currentColor"/></svg>02 · The decision</p>
+  <h2 class="h">Why this app, out of all the candidates</h2>
+  <p class="lede">The brief was the next-best offline app, after Gridlark, for two years of ad revenue with no server. A bundle of four Indian trick-taking games won because one listing can rank for four separate keyword pools, two of which are poorly served, and card players come back every day for years.</p>
+
+  <div class="kpis">
+    <div class="kpi"><b>4</b><span>keyword pools from one app: callbreak, 29, court piece / rang, mendikot / mindi</span></div>
+    <div class="kpi"><b>~$17k</b><span>per 100k installs over the app's life <span class="chip est">Estimate</span></span></div>
+    <div class="kpi"><b>~$170k</b><span>per 1M installs over two years <span class="chip est">Estimate</span></span></div>
+    <div class="kpi"><b>3+</b><span>target age rating: no chips, coins or betting, so no "simulated gambling"</span></div>
+  </div>
+
+  <h3>The candidates</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Option</th><th>For</th><th>Against</th><th class="num">Two-year revenue</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>Tashlark: four-game Indian card bundle</strong></td><td>Huge South Asian demand and diaspora. Four keyword pools. Court Piece and Mendikot leaders are weak or stale. Daily, habitual play.</td><td>Call Break itself is very crowded; South Asian eCPMs are low.</td><td class="num">~$50–250k <span class="chip est">Est.</span></td></tr>
+        <tr><td>A single Call Break app</td><td>The biggest of the four pools.</td><td>Teslatech has 100M+ installs; a newcomer ranks for one crowded keyword only.</td><td class="num">lower</td></tr>
+        <tr><td>Solitaire (Klondike and friends)</td><td>Earns 2–3× per install (Western audiences).</td><td>Saturated by giants; a new entrant gets few organic installs.</td><td class="num">~$12–48k <span class="chip est">Est.</span></td></tr>
+        <tr><td>Teen Patti or Rummy</td><td>Very popular.</td><td>Rated 18+ "Simulated Gambling" on Play; India's Online Gaming Act 2025 and Rules 2026 (in force 1 May 2026) ban online money games. Avoided.</td><td class="num">rejected</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Competitor gaps, pool by pool</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Pool</th><th>Leaders on Play</th><th>Gap Tashlark aims at</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Call Break</strong></td><td>Teslatech (<code>io.teslatech.callbreak</code>) 100M+ installs, 4.3★ · Hippo Lab (<code>com.callbreak.hippo</code>) 10M+, 3.6★</td><td>Very crowded. Tashlark competes on fairness, calm and the bundle, not on this keyword alone.</td></tr>
+        <tr><td><strong>29</strong></td><td>Z Level Labs (<code>com.zlevelapps.cardgame29</code>) 10M+, 4.2★ · Knight's Cave (<code>com.BS_Pias.twentynine</code>) 10M+, 4.4★</td><td>Strong leaders. House-rule toggles (pair, doubling, last-trick point) answer "wrong rules" complaints.</td></tr>
+        <tr><td><strong>Court Piece / Rang</strong></td><td>Artoon (<code>com.artoon.courtpieceoffline</code>) 500K+, 3.6★. No Court Piece app has passed 1M installs.</td><td>The weakest pool: low ratings, no dominant app.</td></tr>
+        <tr><td><strong>Mendikot / Mindi</strong></td><td>Tilted Head (<code>com.thp.mendicot</code>) 1M+, 3.9★, last updated March 2024.</td><td>Stale leader. Both trump styles (hidden and cut) are built in.</td></tr>
+      </tbody>
+      <caption>Install bands and ratings as found in the October 2026 research; Play figures move. <span class="chip verify">Verify</span> before quoting.</caption>
+    </table>
+  </div>
+
+  <h3>What players complain about, and Tashlark's answer</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Top complaint in this genre's reviews</th><th>What Tashlark does</th></tr></thead>
+      <tbody>
+        <tr><td>"Rigged", "the computer sees my cards", "cheating AI"</td><td>The AI only knows what a player at its seat could know. It samples possible deals consistent with what has been seen (Monte-Carlo determinization) and never reads the real hidden hands. Deals come from a seeded shuffle, so any match can be replayed exactly. <span class="chip built">Built</span></td></tr>
+        <tr><td>Forced or incorrect rules, missing variants</td><td>House-rule toggles per game in Settings, plus an in-game Rules sheet written from the active rules. <span class="chip built">Built</span></td></tr>
+        <tr><td>Unskippable ads after every round, fake close buttons</td><td>Never an ad on the table. Interstitials only after you tap on from a result, at most one per 3 minutes after a match and one per 8 minutes at a round break. None on the install day or in the first 2 matches. Only standard Google formats. <span class="chip built">Built</span></td></tr>
+        <tr><td>Crashes, or the app "quitting" on the last round and losing the match</td><td>Every action is saved; a killed app resumes the exact position by replaying the log. <span class="chip built">Built</span></td></tr>
+        <tr><td>No way to turn off music</td><td>There is no sound or music at all. Ads are muted too. Haptics can be turned off. <span class="chip built">Built</span></td></tr>
+        <tr><td>Gambling feel: chips, coins, "win big"</td><td>None. Scores are plain numbers; the target rating is 3+. <span class="chip built">Built</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The revenue model</h3>
+  <p>All numbers here are estimates <span class="chip est">Estimate</span> built from 2026 eCPM benchmarks for South Asian traffic. The model counts what one active player is worth per day, then multiplies by how many days an average install stays active.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Per online daily active user, per day</th><th class="num">Count</th><th class="num">eCPM</th><th class="num">Value</th></tr></thead>
+      <tbody>
+        <tr><td>Interstitials (between matches and long round breaks)</td><td class="num">3</td><td class="num">$1.10</td><td class="num">$0.0033</td></tr>
+        <tr><td>Rewarded (opt-in ad-free hour)</td><td class="num">0.5</td><td class="num">$2.00</td><td class="num">$0.0010</td></tr>
+        <tr><td>Banner impressions (Home and Stats)</td><td class="num">15</td><td class="num">$0.25</td><td class="num">$0.0038</td></tr>
+        <tr><td><strong>Total per online DAU</strong></td><td></td><td></td><td class="num"><strong>≈ $0.0081</strong></td></tr>
+        <tr><td>× 0.75 because about a quarter of play happens offline, where no ad can load</td><td></td><td></td><td class="num">≈ $0.0061</td></tr>
+        <tr><td>Diaspora uplift (Gulf and Western players earn several times more per impression)</td><td></td><td></td><td class="num">× ~1.4</td></tr>
+        <tr class="pick"><td><strong>Blended ARPDAU</strong></td><td></td><td></td><td class="num"><strong>≈ $0.0085</strong></td></tr>
+        <tr><td>× ~20 lifetime active days per install</td><td></td><td></td><td class="num">≈ $0.17 / install</td></tr>
+        <tr class="pick"><td><strong>Per 100,000 installs</strong></td><td></td><td></td><td class="num"><strong>≈ $17k</strong> (range $12–24k)</td></tr>
+        <tr><td>Per 1,000,000 installs over two years</td><td></td><td></td><td class="num">≈ $170k</td></tr>
+      </tbody>
+      <caption>The 1.4× uplift is the multiplier implied by the brief's numbers (90% of users at the base rate, 10% at roughly five times it). Remove-ads purchases are not included.</caption>
+    </table>
+  </div>
+
+  <h4>Where the players are expected to be <span class="chip est">Estimate</span></h4>
+  <div class="geo" role="img" aria-label="Expected install split: India 60 percent, Nepal 15, Bangladesh 10, Pakistan 5, Gulf and Western diaspora 10.">
+    <i style="width:60%;background:var(--madder)">India 60%</i>
+    <i style="width:15%;background:var(--card-back);color:#F2ECE0">Nepal 15%</i>
+    <i style="width:10%;background:var(--neem);color:#FBF7EE">BD 10%</i>
+    <i style="width:5%;background:var(--ink-muted)"></i>
+    <i style="width:10%;background:var(--haldi);color:var(--on-haldi)">Diaspora</i>
+  </div>
+  <div class="geo-legend">
+    <span style="--c:var(--madder)">India 60%</span>
+    <span style="--c:var(--card-back)">Nepal 15% (Call Break is the national card game)</span>
+    <span style="--c:var(--neem)">Bangladesh 10% (29 is huge there)</span>
+    <span style="--c:var(--ink-muted)">Pakistan 5% (Rang / Court Piece)</span>
+    <span style="--c:var(--haldi)">Gulf and Western diaspora 10%</span>
+  </div>
+
+  <h4>Sensitivity: revenue per 100,000 installs <span class="chip est">Estimate</span></h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Lifetime active days per install</th><th class="num">ARPDAU $0.0060</th><th class="num">ARPDAU $0.0085</th><th class="num">ARPDAU $0.0110</th></tr></thead>
+      <tbody>
+        <tr><td>12 days (players drift away fast)</td><td class="num">$7.2k</td><td class="num">$10.2k</td><td class="num">$13.2k</td></tr>
+        <tr class="pick"><td>20 days (central case)</td><td class="num">$12.0k</td><td class="num"><strong>$17.0k</strong></td><td class="num">$22.0k</td></tr>
+        <tr><td>30 days (a loyal core keeps playing daily)</td><td class="num">$18.0k</td><td class="num">$25.5k</td><td class="num">$33.0k</td></tr>
+      </tbody>
+      <caption>Two-year totals scale with installs: 300k installs ≈ $51k, 1M ≈ $170k, 1.5M ≈ $255k at the central case. Lower ARPDAU means more Indian traffic or more offline play; higher means more diaspora or better fill.</caption>
+    </table>
+  </div>
+
+  <div class="note warn"><p><strong>The biggest uncertainty is offline-first players.</strong> Many people choose an offline card game precisely to avoid ads: they play in airplane mode, on the metro, or with data off. Ads only load with a connection, so a heavy offline audience can push the 0.75 factor well down. The model also assumes the app reaches the install numbers above, which depends on ranking for the four keywords.</p></div>
+
+  <h3>Why it stays legal and family-friendly</h3>
+  <p>Teen Patti and Rummy apps sit under Play's 18+ "Simulated Gambling" rating, and India's Promotion and Regulation of Online Gaming Act 2025, with its Rules of 2026 (in force from 1 May 2026), bans online money games. Tashlark has no stakes, no virtual currency, no prizes and no online play: it is an offline social game of skill. It also asks AdMob for ads rated Teen or lower, and gambling ad categories must be blocked in the AdMob console (section 09).</p>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="chapter" id="money">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-d" fill="currentColor"/></svg>03 · Revenue</p>
+  <h2 class="h">How it makes money</h2>
+  <p class="lede">Three Google AdMob formats and one Play purchase. Every rule below is in <code>app/src/main/java/com/tashlark/app/ads/AdsManager.kt</code>, <code>ads/AdBanner.kt</code>, <code>ui/AppNav.kt</code> and <code>ui/table/TableScreen.kt</code>. The guiding principle: the card table is sacred.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Format</th><th>Where</th><th>When exactly</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Banner</strong> (anchored adaptive)</td><td>Bottom of <strong>Home</strong> and <strong>Stats</strong> only</td><td>When consent allows ads, ads are not removed and no ad-free hour is running. Its height is reserved up front so nothing jumps when it loads (or doesn't, offline). Hidden on screens narrower than 320 dp. Never on the table, Settings, Welcome, Privacy or Licences. <span class="chip built">Built</span></td></tr>
+        <tr><td><strong>Interstitial</strong></td><td>Only when you tap on from a result sheet</td><td>"Next round" counts as a <em>round break</em>; "Play again" and "Home" after a match count as a <em>match break</em>. Shown only if every condition below holds. <span class="chip built">Built</span></td></tr>
+        <tr><td><strong>Rewarded</strong></td><td>Match-result sheet, as a quiet text button</td><td>"Watch a short ad for an hour without ads". Offered only when a rewarded ad is loaded, ads are not removed and no ad-free hour is already running. Finishing it sets <code>adFreeUntil = now + 1 hour</code>; skipping gives nothing. <span class="chip built">Built</span></td></tr>
+        <tr><td><strong>Remove ads</strong></td><td>Settings → Support Tashlark</td><td>One-time in-app product <code>remove_ads</code>. Turns off every ad for good, works offline once bought, and can be restored. <span class="chip built">Built</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The interstitial gate</h3>
+  <p><code>AdsManager.atBreak()</code> shows an interstitial only if <strong>all</strong> of these are true, and then always continues to the next screen exactly once, whether or not an ad appeared:</p>
+  <ol>
+    <li>Ads are not removed, and no ad-free hour is running.</li>
+    <li>Consent allows ad requests and the Mobile Ads SDK has started.</li>
+    <li>An interstitial is already loaded (the app never makes you wait for one).</li>
+    <li>Today is <strong>not the install day</strong> (calendar day of first launch, stored on first open).</li>
+    <li>At least <strong>2 matches</strong> have been finished in total (<code>FREE_MATCHES = 2</code>), across all games.</li>
+    <li>Enough time has passed since the last interstitial: <strong>3 minutes</strong> for a match break (<code>MATCH_GAP_MS</code>), <strong>8 minutes</strong> for a round break (<code>ROUND_GAP_MS</code>). In practice a round-break ad appears at most once in a long match.</li>
+  </ol>
+  <p>There is no interstitial on app open, resume, the back button, "Abandon match", during a deal or in the middle of a hand. Ads play muted (<code>MobileAds.setAppMuted(true)</code>) and are limited to content rated Teen or lower (<code>MAX_AD_CONTENT_RATING_T</code>).</p>
+
+  <h3>Consent and privacy</h3>
+  <ul>
+    <li>Google's User Messaging Platform (UMP) runs on each app start, at most once per process. It shows a consent form only where the law requires one (EEA, UK, Switzerland, US state rules).</li>
+    <li>If the consent check fails (offline), the app uses whatever consent was stored previously and retries on the next start.</li>
+    <li>When the regulations require it, Settings shows <strong>Ad privacy choices</strong> to reopen the form.</li>
+    <li>Players who removed ads never have any ad loaded.</li>
+  </ul>
+
+  <h3>Remove ads and the ad-free hour</h3>
+  <p><code>billing/BillingManager.kt</code> uses Play Billing 9.1 with pending purchases enabled and automatic service reconnection. It reads the price from Play, so the price is set only in Play Console. Owned purchases are acknowledged and cached in settings (so they work offline); a pending purchase shows "Purchase pending"; if Play later reports the product as not owned (a refund), ads come back.</p>
+  <div class="note"><p><strong>Suggested price: ₹149 in India</strong> (about $1.99 in the US and diaspora markets). It is below the ₹199 used for Gridlark because card players in Nepal, Bangladesh and Pakistan are more price-sensitive. Assuming 0.3–0.5% of installs buy it <span class="chip est">Estimate</span>, that adds roughly $400–800 per 100,000 installs after Play's 15% fee: welcome, but ads remain the business.</p></div>
+
+  <h3>What a player actually sees <span class="chip est">Example</span></h3>
+  <ol class="steps">
+    <li><div><strong>Install day:</strong> plays four Call Break matches. Banner on Home only. No interstitials at all.</div></li>
+    <li><div><strong>Day two, first match ends:</strong> taps "Play again"; an interstitial shows (install day is over and 2+ matches are finished).</div></li>
+    <li><div><strong>Same session:</strong> a 29 match ends 12 minutes later; another interstitial. Round breaks in the first 8 minutes of that match showed nothing; one later round break could have shown a single ad, which would then have reset the clock.</div></li>
+    <li><div><strong>Next match result:</strong> the player taps "Watch a short ad for an hour without ads". For the next hour there are no banners and no interstitials.</div></li>
+  </ol>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="chapter" id="stack">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-c" fill="currentColor"/></svg>04 · Tools</p>
+  <h2 class="h">Tech stack</h2>
+  <p class="lede">The same verified set as Gridlark, so both apps build the same way. Versions come from <code>gradle/libs.versions.toml</code>, <code>app/build.gradle.kts</code> and <code>gradle/wrapper/gradle-wrapper.properties</code>.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Piece</th><th>Version</th><th>What it does in Tashlark</th></tr></thead>
+      <tbody>
+        <tr><td>Android Gradle Plugin</td><td><code>9.4.1</code></td><td>Builds the APK and AAB, runs R8 shrinking (minify and resource shrinking on release) and lint (errors fail the build).</td></tr>
+        <tr><td>Gradle (wrapper)</td><td><code>9.6.1</code></td><td>Build tool. Configuration cache, build cache and parallel builds on (<code>gradle.properties</code>).</td></tr>
+        <tr><td>Kotlin</td><td><code>2.3.21</code></td><td>The only language. Plus the Compose compiler and serialization plugins at the same version.</td></tr>
+        <tr><td>KSP</td><td><code>2.3.12</code></td><td>Runs the Room annotation processor.</td></tr>
+        <tr><td>Jetpack Compose BOM</td><td><code>2026.09.00</code></td><td>All UI: ui, foundation, Material 3 (themed with Kora &amp; Neel tokens, no dynamic colour).</td></tr>
+        <tr><td>Navigation Compose</td><td><code>2.10.2</code></td><td>Type-safe routes as <code>@Serializable</code> objects (<code>WelcomeRoute</code>, <code>HomeRoute</code>, <code>TableRoute(gameId, resume, nonce)</code>, …).</td></tr>
+        <tr><td>Activity Compose · Lifecycle · core-ktx · SplashScreen</td><td><code>1.13.0</code> · <code>2.11.0</code> · <code>1.19.1</code> · <code>1.2.0</code></td><td>Edge-to-edge activity, ViewModels, lifecycle-aware flows, splash kept until settings load.</td></tr>
+        <tr><td>DataStore Preferences</td><td><code>1.2.1</code></td><td>Settings, house rules, ad counters, remove-ads flag. Corrupt files are replaced with defaults.</td></tr>
+        <tr><td>Room</td><td><code>2.8.5</code></td><td>Match history (<code>tashlark.db</code>, table <code>matches</code>). Schema exported to <code>app/schemas/</code>.</td></tr>
+        <tr><td>kotlinx.serialization · coroutines</td><td><code>1.11.0</code> · <code>1.11.0</code></td><td>Saved-match JSON and routes; the game loop, AI on <code>Dispatchers.Default</code>, saving on IO.</td></tr>
+        <tr><td>Google Mobile Ads · UMP</td><td><code>25.5.0</code> · <code>4.0.0</code></td><td>Banner, interstitial and rewarded ads; consent forms. Initialisation and ad loading optimised off the main thread via manifest flags.</td></tr>
+        <tr><td>Play Billing (ktx)</td><td><code>9.1.0</code></td><td>The <code>remove_ads</code> one-time product.</td></tr>
+        <tr><td>Play In-App Review (ktx)</td><td><code>2.0.2</code></td><td>Dependency present and a <code>reviewAsked</code> flag exists in settings, but no review prompt is wired yet. <span class="chip plan">Planned</span></td></tr>
+        <tr><td>WorkManager · ProfileInstaller</td><td><code>2.11.2</code> · <code>1.4.1</code></td><td>WorkManager is declared but unused (no reminders in Tashlark). ProfileInstaller is ready for baseline profiles, which don't exist yet. <span class="chip plan">Planned</span></td></tr>
+        <tr><td>JUnit</td><td><code>4.13.2</code></td><td>Engine tests (plain JVM) and app unit tests.</td></tr>
+        <tr><td>SDK levels</td><td>compileSdk <code>37</code> · targetSdk <code>36</code> · minSdk <code>26</code></td><td>Android 8.0 and newer. Java 17 bytecode; CI builds with JDK 21 (Temurin).</td></tr>
+        <tr><td>Fonts</td><td>Anek (variable) · Tiro Devanagari Hindi</td><td>Bundled in <code>res/font/</code> (both SIL OFL), so the app looks right offline and covers Latin, Devanagari and Bangla.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Deliberately <strong>not</strong> used: Hilt or Koin (a manual <code>AppContainer</code> is enough), Firebase, analytics, crash reporting, any network API of our own, sound libraries. The only permissions are <code>INTERNET</code> and <code>ACCESS_NETWORK_STATE</code>, both for ads and billing. The activity is portrait-only.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="chapter" id="architecture">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-s" fill="currentColor"/></svg>05 · Structure</p>
+  <h2 class="h">Architecture</h2>
+  <p class="lede">Two Gradle modules. <code>:engine</code> is plain Kotlin with no Android code: the cards, the rules of all four games, scoring and the computer players. It runs and is tested on any computer. <code>:app</code> is the Android app: screens, the table, saving, history, ads and billing. The app depends on the engine; the engine depends on nothing.</p>
+
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 590" role="img" aria-label="Module and layer diagram. The app module has five layers from Compose UI down to storage and SDKs. The engine module sits on the right and is used by the game wiring and the table view model.">
+        <!-- :app frame -->
+        <rect class="dg-frame" x="10" y="10" width="715" height="570" rx="10"/>
+        <text class="dg-big" x="28" y="38">:app</text>
+        <text class="dg-m" x="76" y="38">Android application · com.tashlark.app</text>
+        <text class="dg-lab" x="28" y="88">UI · Compose</text>
+        <text class="dg-lab" x="28" y="178">State</text>
+        <text class="dg-lab" x="28" y="268">Game wiring</text>
+        <text class="dg-lab" x="28" y="358">Repositories</text>
+        <text class="dg-lab" x="28" y="372">&amp; services</text>
+        <text class="dg-lab" x="28" y="448">Storage</text>
+        <text class="dg-lab" x="28" y="462">&amp; SDKs</text>
+        <line class="dg-sep" x1="20" y1="132" x2="715" y2="132"/>
+        <line class="dg-sep" x1="20" y1="222" x2="715" y2="222"/>
+        <line class="dg-sep" x1="20" y1="312" x2="715" y2="312"/>
+        <line class="dg-sep" x1="20" y1="402" x2="715" y2="402"/>
+        <line class="dg-sep" x1="20" y1="492" x2="715" y2="492"/>
+        <!-- row 1: UI -->
+        <rect class="dg-box" x="140" y="60" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="152" y="82">Screens · AppNav</text>
+        <text class="dg-s" x="152" y="99">Welcome, Home, Table, Settings,</text>
+        <text class="dg-s" x="152" y="112">Stats, Document (privacy, licences)</text>
+        <rect class="dg-box" x="335" y="60" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="347" y="82">Table parts</text>
+        <text class="dg-s" x="347" y="99">HandView, TrickArea, SeatChip,</text>
+        <text class="dg-s" x="347" y="112">BidPanel, SuitPanel, TrumpBadge</text>
+        <rect class="dg-box" x="530" y="60" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="542" y="82">Design system</text>
+        <text class="dg-s" x="542" y="99">theme (Kora &amp; Neel), CardArt,</text>
+        <text class="dg-s" x="542" y="112">Widgets, Icons, Haptics</text>
+        <!-- row 2: state -->
+        <rect class="dg-box hot" x="140" y="150" width="575" height="60" rx="6"/>
+        <text class="dg-t" x="152" y="172">TableViewModel (one per match)</text>
+        <text class="dg-s" x="152" y="189">StateFlow&lt;TableUi&gt; snapshot · SharedFlow&lt;Cue&gt; for haptics · game loop with paced AI turns</text>
+        <text class="dg-s" x="152" y="203">action log + save after every action · hints · result sheets. Home, Stats and Settings read repositories directly.</text>
+        <path class="dg-a" d="M300,120 V150" marker-end="url(#ah)"/>
+        <text class="dg-m" x="306" y="142">act(), playCard()</text>
+        <path class="dg-a" d="M470,150 V120" marker-end="url(#ah)"/>
+        <text class="dg-m" x="476" y="142">TableUi, cues</text>
+        <!-- row 3: wiring -->
+        <rect class="dg-box" x="140" y="240" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="152" y="262">data/GameCatalog.kt</text>
+        <text class="dg-s" x="152" y="279">GameInfo tiles, create(id, rules)</text>
+        <text class="dg-s" x="152" y="292">→ CardGame&lt;HandState, Any&gt;</text>
+        <rect class="dg-box" x="335" y="240" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="347" y="262">data/Persistence.kt</text>
+        <text class="dg-s" x="347" y="279">ActionCodec ("P12", "B3", "T-1:2")</text>
+        <text class="dg-s" x="347" y="292">SavedMatch, SavedRules</text>
+        <rect class="dg-box" x="530" y="240" width="185" height="60" rx="6"/>
+        <text class="dg-t" x="542" y="262">data/StatsMath.kt</text>
+        <text class="dg-s" x="542" y="279">win %, current and best streaks,</text>
+        <text class="dg-s" x="542" y="292">per-game records, totals</text>
+        <path class="dg-a" d="M232,210 V240" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M427,210 V240" marker-end="url(#ah)"/>
+        <!-- row 4: services -->
+        <rect class="dg-box" x="140" y="330" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="150" y="352">Settings</text>
+        <text class="dg-s" x="150" y="368">Repository</text>
+        <text class="dg-s" x="150" y="381">+ HouseRules</text>
+        <rect class="dg-box" x="257" y="330" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="267" y="352">MatchStore</text>
+        <text class="dg-s" x="267" y="368">atomic JSON,</text>
+        <text class="dg-s" x="267" y="381">one per game</text>
+        <rect class="dg-box" x="374" y="330" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="384" y="352">MatchDao</text>
+        <text class="dg-s" x="384" y="368">history</text>
+        <text class="dg-s" x="384" y="381">Flow&lt;List&gt;</text>
+        <rect class="dg-box madder" x="491" y="330" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="501" y="352">AdsManager</text>
+        <text class="dg-s" x="501" y="368">consent, gates,</text>
+        <text class="dg-s" x="501" y="381">rewarded hour</text>
+        <rect class="dg-box" x="608" y="330" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="618" y="352">Billing</text>
+        <text class="dg-s" x="618" y="368">Manager</text>
+        <text class="dg-s" x="618" y="381">remove_ads</text>
+        <path class="dg-a" d="M193,210 V330" marker-end="url(#ah)"/>
+        <path class="dg-a dash" d="M310,300 V330" marker-end="url(#ah)"/>
+        <!-- row 5: storage -->
+        <rect class="dg-box quiet" x="140" y="420" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="150" y="442">DataStore</text>
+        <text class="dg-m" x="150" y="460">settings</text>
+        <rect class="dg-box quiet" x="257" y="420" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="267" y="442">Files</text>
+        <text class="dg-m" x="267" y="460">matches/*.json</text>
+        <rect class="dg-box quiet" x="374" y="420" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="384" y="442">Room</text>
+        <text class="dg-m" x="384" y="460">tashlark.db</text>
+        <rect class="dg-box quiet" x="491" y="420" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="501" y="442">Mobile Ads</text>
+        <text class="dg-s" x="501" y="460">+ UMP consent</text>
+        <rect class="dg-box quiet" x="608" y="420" width="107" height="60" rx="6"/>
+        <text class="dg-t" x="618" y="442">Play Billing</text>
+        <text class="dg-s" x="618" y="460">Google Play</text>
+        <path class="dg-a" d="M193,390 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M310,390 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M427,390 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M544,390 V420" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M661,390 V420" marker-end="url(#ah)"/>
+        <!-- container -->
+        <rect class="dg-box indigo" x="140" y="508" width="575" height="58" rx="6"/>
+        <text class="dg-t" x="152" y="530">AppContainer (TashlarkApplication) · manual DI</text>
+        <text class="dg-s" x="152" y="547">Builds settings, db, matches, ads, billing and an appScope once; passed to every screen and ViewModel.</text>
+        <text class="dg-s" x="152" y="560">MainActivity hosts one Compose tree, runs consent and billing on every start.</text>
+        <!-- engine frame -->
+        <rect class="dg-frame dash" x="745" y="10" width="245" height="570" rx="10"/>
+        <text class="dg-big" x="763" y="38">:engine</text>
+        <text class="dg-m" x="763" y="56">pure Kotlin / JVM, no Android</text>
+        <rect class="dg-box hot" x="761" y="72" width="213" height="62" rx="6"/>
+        <text class="dg-t" x="773" y="92">Cards.kt</text>
+        <text class="dg-s" x="773" y="108">Suit, Card (one Int), CardSet (52-bit</text>
+        <text class="dg-s" x="773" y="122">mask), Rng (SplitMix64), mixSeed</text>
+        <rect class="dg-box" x="761" y="144" width="213" height="62" rx="6"/>
+        <text class="dg-t" x="773" y="164">Engine.kt</text>
+        <text class="dg-s" x="773" y="180">Action, Trick, Rules&lt;S&gt;, HandState,</text>
+        <text class="dg-s" x="773" y="194">Teams, sampleHands (voids-aware)</text>
+        <rect class="dg-box" x="761" y="216" width="213" height="62" rx="6"/>
+        <text class="dg-t" x="773" y="236">Game.kt</text>
+        <text class="dg-s" x="773" y="252">CardGame&lt;S, M&gt;, Phase, TableView,</text>
+        <text class="dg-s" x="773" y="266">HandSummary, Standing, seat names</text>
+        <rect class="dg-box neem" x="761" y="288" width="213" height="62" rx="6"/>
+        <text class="dg-t" x="773" y="308">Ai.kt</text>
+        <text class="dg-s" x="773" y="324">Skill (Easy/Medium/Hard), Policy&lt;S&gt;,</text>
+        <text class="dg-s" x="773" y="338">MonteCarloAi (determinization)</text>
+        <rect class="dg-box" x="761" y="364" width="103" height="50" rx="6"/>
+        <text class="dg-t" x="771" y="384">callbreak/</text>
+        <text class="dg-m" x="771" y="401">Rules·Policy·Game</text>
+        <rect class="dg-box" x="871" y="364" width="103" height="50" rx="6"/>
+        <text class="dg-t" x="881" y="384">twentynine/</text>
+        <text class="dg-m" x="881" y="401">Rules·Policy·Game</text>
+        <rect class="dg-box" x="761" y="422" width="103" height="50" rx="6"/>
+        <text class="dg-t" x="771" y="442">courtpiece/</text>
+        <text class="dg-m" x="771" y="459">Rules·Policy·Game</text>
+        <rect class="dg-box" x="871" y="422" width="103" height="50" rx="6"/>
+        <text class="dg-t" x="881" y="442">mendikot/</text>
+        <text class="dg-m" x="881" y="459">Rules·Policy·Game</text>
+        <text class="dg-s" x="763" y="500">55 JVM tests: legality, scoring,</text>
+        <text class="dg-s" x="763" y="514">dealer rotation, determinism,</text>
+        <text class="dg-s" x="763" y="528">no hidden-card leaks, AI beats</text>
+        <text class="dg-s" x="763" y="542">random play.</text>
+        <!-- app → engine -->
+        <path class="dg-a acc" d="M325,270 H735" marker-end="url(#ahA)"/>
+        <text class="dg-m" x="540" y="318" style="fill:var(--madder)">creates games</text>
+        <path class="dg-a acc" d="M715,180 H735" marker-end="url(#ahA)"/>
+      </svg>
+    </div>
+    <figcaption>Arrows point from the caller to what it uses. The madder arrows are the only places the app touches the engine: <code>GameCatalog.create()</code> builds a game from the house rules, and <code>TableViewModel</code> drives its <code>Rules</code> and <code>MonteCarloAi</code>.</figcaption>
+  </figure>
+
+  <h3>One table for four games</h3>
+  <p>Every game implements the same two interfaces, so there is one table screen and one view model, not four.</p>
+  <dl class="defs">
+    <dt><code>Rules&lt;S&gt;</code></dt><dd>Pure rules for a single hand: <code>toAct(s)</code> (whose turn, or −1 when the hand is over), <code>legalActions(s)</code>, <code>apply(s, a)</code> returning a <em>new</em> state, <code>utility(s)</code> (score per seat, for the AI), <code>determinize(s, viewer, rng)</code> (hide what the viewer can't know) and <code>winnerOf(s, trick)</code>.</dd>
+    <dt><code>CardGame&lt;S, M&gt;</code></dt><dd>The match around the hands: <code>newMatch(seed)</code>, <code>deal(match)</code>, <code>finishHand</code>, <code>isMatchOver</code>, <code>winners</code>, plus everything the table needs to show: <code>table(hand)</code> (a <code>TableView</code> from your seat's point of view, never revealing what you can't see), <code>summary</code>, <code>standings</code>, <code>progress</code>, <code>rulesText()</code> and <code>explain()</code> for hints. <code>aiSpecial()</code> lets a game handle bids or trump choice with its own logic.</dd>
+    <dt><code>Action</code></dt><dd>Every decision in any game is one of eight values: <code>Play(card)</code>, <code>Bid(n)</code>, <code>Pass</code>, <code>SetTrump(card?, suit)</code>, <code>CallReveal</code>, <code>Double</code>, <code>Redouble</code>, <code>NoDouble</code>. The table UI simply looks at which ones are legal right now and shows the matching panel: a bid grid, suit buttons, a "Set trump" bar, Double/Redouble buttons, a "Show trump" button, or playable cards.</dd>
+  </dl>
+
+  <h3>What happens when you play a card</h3>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 330" role="img" aria-label="Flow of a human card play and the AI turns that follow, in numbered steps.">
+        <text class="dg-lab" x="20" y="28">Your card</text>
+        <rect class="dg-box" x="20" y="44" width="150" height="92" rx="8"/>
+        <text class="dg-t" x="32" y="66">HandView</text>
+        <text class="dg-s" x="32" y="84">First tap lifts the card</text>
+        <text class="dg-s" x="32" y="98">20 dp; second tap plays.</text>
+        <text class="dg-s" x="32" y="112">One-tap play is optional.</text>
+        <text class="dg-s" x="32" y="126">Illegal cards are dimmed.</text>
+        <rect class="dg-box hot" x="200" y="44" width="180" height="92" rx="8"/>
+        <text class="dg-t" x="212" y="66">TableViewModel.act()</text>
+        <text class="dg-s" x="212" y="84">Your turn? Is it in</text>
+        <text class="dg-s" x="212" y="98">legalActions()? If not: a reason</text>
+        <text class="dg-s" x="212" y="112">("You must follow ♥") and a</text>
+        <text class="dg-s" x="212" y="126">reject haptic. Nothing changes.</text>
+        <rect class="dg-box neem" x="410" y="44" width="170" height="92" rx="8"/>
+        <text class="dg-t" x="422" y="66">rules.apply(hand, a)</text>
+        <text class="dg-s" x="422" y="84">Returns a new immutable</text>
+        <text class="dg-s" x="422" y="98">state: card removed, trick</text>
+        <text class="dg-s" x="422" y="112">extended, voids updated,</text>
+        <text class="dg-s" x="422" y="126">trick winner and score.</text>
+        <rect class="dg-box" x="610" y="44" width="170" height="92" rx="8"/>
+        <text class="dg-t" x="622" y="66">Log and save</text>
+        <text class="dg-s" x="622" y="84">Append "P37" to the log;</text>
+        <text class="dg-s" x="622" y="98">MatchStore writes the JSON</text>
+        <text class="dg-s" x="622" y="112">(temp file + rename) on the</text>
+        <text class="dg-s" x="622" y="126">app scope, off the UI thread.</text>
+        <rect class="dg-box" x="810" y="44" width="170" height="92" rx="8"/>
+        <text class="dg-t" x="822" y="66">publish()</text>
+        <text class="dg-s" x="822" y="84">New TableUi snapshot;</text>
+        <text class="dg-s" x="822" y="98">Compose redraws. Cue</text>
+        <text class="dg-s" x="822" y="112">CARD_LANDED → light tick.</text>
+        <text class="dg-s" x="822" y="126">Trick done? Shown ~0.9 s.</text>
+        <path class="dg-a" d="M170,90 H198" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M380,90 H408" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M580,90 H608" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M780,90 H808" marker-end="url(#ah)"/>
+        <circle class="dg-nb" cx="184" cy="76" r="9"/><text class="dg-n" x="184" y="80">1</text>
+        <circle class="dg-nb" cx="394" cy="76" r="9"/><text class="dg-n" x="394" y="80">2</text>
+        <circle class="dg-nb" cx="594" cy="76" r="9"/><text class="dg-n" x="594" y="80">3</text>
+        <circle class="dg-nb" cx="794" cy="76" r="9"/><text class="dg-n" x="794" y="80">4</text>
+        <!-- AI loop -->
+        <text class="dg-lab" x="20" y="186">Then the computer players: runLoop()</text>
+        <rect class="dg-box" x="20" y="202" width="190" height="104" rx="8"/>
+        <text class="dg-t" x="32" y="224">Whose turn?</text>
+        <text class="dg-s" x="32" y="242">Hand over → result sheet.</text>
+        <text class="dg-s" x="32" y="256">Seat 0 (you) → publish and</text>
+        <text class="dg-s" x="32" y="270">wait for your tap.</text>
+        <text class="dg-s" x="32" y="284">Seat 1–3 → show "thinking"</text>
+        <text class="dg-s" x="32" y="298">ring on that seat.</text>
+        <rect class="dg-box" x="240" y="202" width="200" height="104" rx="8"/>
+        <text class="dg-t" x="252" y="224">Natural pause</text>
+        <text class="dg-s" x="252" y="242">Forced move 320 ms; bids and</text>
+        <text class="dg-s" x="252" y="256">trump 900–1300 ms; plays</text>
+        <text class="dg-s" x="252" y="270">520–780 ms; all × speed</text>
+        <text class="dg-s" x="252" y="284">(Relaxed 1.4, Normal 1,</text>
+        <text class="dg-s" x="252" y="298">Fast 0.5).</text>
+        <rect class="dg-box neem" x="470" y="202" width="250" height="104" rx="8"/>
+        <text class="dg-t" x="482" y="224">Decide on Dispatchers.Default</text>
+        <text class="dg-s" x="482" y="242">Only one legal action → take it.</text>
+        <text class="dg-s" x="482" y="256">Else game.aiSpecial() (bids, trump)</text>
+        <text class="dg-s" x="482" y="270">or MonteCarloAi.decide() on a</text>
+        <text class="dg-s" x="482" y="284">snapshot, with a forked seeded Rng.</text>
+        <text class="dg-s" x="482" y="298">The real hidden hands are never read.</text>
+        <rect class="dg-box" x="750" y="202" width="230" height="104" rx="8"/>
+        <text class="dg-t" x="762" y="224">applyAction()</text>
+        <text class="dg-s" x="762" y="242">Exactly the same path as yours:</text>
+        <text class="dg-s" x="762" y="256">apply, log, save, cue, show the</text>
+        <text class="dg-s" x="762" y="270">completed trick, then loop again.</text>
+        <path class="dg-a" d="M210,254 H238" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M440,254 H468" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M720,254 H748" marker-end="url(#ah)"/>
+        <path class="dg-a acc" d="M865,306 V320 H115 V308" marker-end="url(#ahA)"/>
+        <path class="dg-a acc dash" d="M895,136 V170 H115 V200" marker-end="url(#ahA)"/>
+      </svg>
+    </div>
+    <figcaption>The loop stops whenever it is your turn, so a fast double tap is ignored rather than played twice. If you leave the table, the view model saves once more when it is cleared.</figcaption>
+  </figure>
+
+  <h3>How an AI turn is decided</h3>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Monte Carlo decision: sample worlds consistent with what the seat can see, play every legal action out in each world with the fast policy, and pick the best average.">
+        <rect class="dg-box" x="20" y="40" width="190" height="170" rx="8"/>
+        <text class="dg-t" x="32" y="62">What seat 2 can see</text>
+        <text class="dg-s" x="32" y="82">its own hand</text>
+        <text class="dg-s" x="32" y="97">every card played so far</text>
+        <text class="dg-s" x="32" y="112">voids: who failed to follow</text>
+        <text class="dg-s" x="32" y="127">hand sizes, bids, trump if</text>
+        <text class="dg-s" x="32" y="142">shown (or set by itself)</text>
+        <text class="dg-m" x="32" y="172">legal: Q♥, 7♥, 3♥</text>
+        <text class="dg-m" x="32" y="188">samples: 24 (Medium)</text>
+        <rect class="dg-box indigo" x="250" y="20" width="200" height="56" rx="8"/>
+        <text class="dg-t" x="262" y="42">World 1</text>
+        <text class="dg-s" x="262" y="60">hidden cards re-dealt at random</text>
+        <rect class="dg-box indigo" x="250" y="96" width="200" height="56" rx="8"/>
+        <text class="dg-t" x="262" y="118">World 2</text>
+        <text class="dg-s" x="262" y="136">honouring every known void</text>
+        <rect class="dg-box indigo" x="250" y="172" width="200" height="56" rx="8"/>
+        <text class="dg-t" x="262" y="194">World k …</text>
+        <text class="dg-s" x="262" y="212">determinize(state, seat, rng)</text>
+        <rect class="dg-box neem" x="490" y="40" width="260" height="170" rx="8"/>
+        <text class="dg-t" x="502" y="62">In every world, for every legal card</text>
+        <text class="dg-s" x="502" y="82">apply the card, then play the rest of</text>
+        <text class="dg-s" x="502" y="97">the hand out with the game's fast</text>
+        <text class="dg-s" x="502" y="112">heuristic Policy for all four seats.</text>
+        <text class="dg-s" x="502" y="132">Add utility(end)[seat] to that card's total.</text>
+        <text class="dg-m" x="502" y="158">Q♥ +31.4   7♥ +18.0   3♥ +22.6</text>
+        <text class="dg-s" x="502" y="182">Stops early after 8+ worlds if 900 ms</text>
+        <text class="dg-s" x="502" y="197">have passed (slow phones stay smooth).</text>
+        <rect class="dg-box hot" x="790" y="80" width="190" height="90" rx="8"/>
+        <text class="dg-t" x="802" y="104">Best average wins</text>
+        <text class="dg-s" x="802" y="124">plays Q♥</text>
+        <text class="dg-s" x="802" y="142">Easy skips the search and</text>
+        <text class="dg-s" x="802" y="156">plays the policy directly.</text>
+        <path class="dg-a" d="M210,125 H246" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M450,48 L488,90" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M450,124 H488" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M450,200 L488,160" marker-end="url(#ah)"/>
+        <path class="dg-a acc" d="M750,125 H788" marker-end="url(#ahA)"/>
+      </svg>
+    </div>
+    <figcaption>This is "Perfect-Information Monte Carlo". Because every simulation runs on a re-sampled copy of the state, the AI is structurally unable to cheat: it does not know where the hidden cards are. Numbers in the example are illustrative.</figcaption>
+  </figure>
+
+  <h3>Saving by replay</h3>
+  <p>A saved match is not a snapshot of the table. It is the <strong>seed</strong> plus the <strong>list of every action</strong>. Deals are generated from the seed, so replaying the actions rebuilds the exact position, down to the face-down trump. One file per game lives in the app's private <code>files/matches/</code> folder.</p>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1000 270" role="img" aria-label="Replay save and restore: the saved JSON holds the seed, the rules and the action logs; restoring deals each hand from the seed and re-applies its actions.">
+        <rect class="dg-box quiet" x="20" y="20" width="360" height="230" rx="8"/>
+        <text class="dg-t" x="34" y="44">files/matches/callbreak.json</text>
+        <text class="dg-m" x="34" y="70">{ "gameId": "callbreak",</text>
+        <text class="dg-m" x="34" y="88">  "seed": -4129307731590651153,</text>
+        <text class="dg-m" x="34" y="106">  "skill": "MEDIUM",</text>
+        <text class="dg-m" x="34" y="124">  "rules": { "cbMustBeat": true, "cbMaxBid": 13,</text>
+        <text class="dg-m" x="34" y="142">             "cbRounds": 5, … },</text>
+        <text class="dg-m" x="34" y="160">  "hands": [ ["B3","B2","B4","B3","P38", …] ],</text>
+        <text class="dg-m" x="34" y="178">  "current": ["B2","B5","B3","B3","P12"],</text>
+        <text class="dg-m" x="34" y="196">  "updatedAt": 1760521000000 }</text>
+        <text class="dg-s" x="34" y="224">P12 = play card code 12 (A♠) · B3 = bid 3 · T-1:2 = name ♦</text>
+        <text class="dg-s" x="34" y="238">trump · R = reveal · D / RD / ND = double, redouble, no double</text>
+        <rect class="dg-box" x="420" y="20" width="250" height="40" rx="6"/>
+        <text class="dg-t" x="432" y="45">1 · game.newMatch(seed)</text>
+        <rect class="dg-box" x="420" y="72" width="250" height="56" rx="6"/>
+        <text class="dg-t" x="432" y="94">2 · for each finished hand</text>
+        <text class="dg-s" x="432" y="112">deal(match) → apply each logged action</text>
+        <text class="dg-s" x="432" y="124">→ check it ended → finishHand</text>
+        <rect class="dg-box" x="420" y="140" width="250" height="44" rx="6"/>
+        <text class="dg-t" x="432" y="160">3 · deal the current hand</text>
+        <text class="dg-s" x="432" y="176">and apply its actions</text>
+        <rect class="dg-box hot" x="420" y="196" width="250" height="54" rx="6"/>
+        <text class="dg-t" x="432" y="218">4 · the identical table</text>
+        <text class="dg-s" x="432" y="236">same cards, same trump, same scores</text>
+        <path class="dg-a" d="M545,60 V70" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M545,128 V138" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M545,184 V194" marker-end="url(#ah)"/>
+        <path class="dg-a" d="M380,135 H416" marker-end="url(#ah)"/>
+        <rect class="dg-box madder" x="710" y="20" width="270" height="110" rx="8"/>
+        <text class="dg-t" x="722" y="42">Why replay, not snapshots</text>
+        <text class="dg-s" x="722" y="62">Tiny files (a few KB), nothing to migrate</text>
+        <text class="dg-s" x="722" y="77">when state classes change, and provably</text>
+        <text class="dg-s" x="722" y="92">fair: the deal comes only from the seed.</text>
+        <text class="dg-s" x="722" y="107">Any failure while replaying (a rule bug,</text>
+        <text class="dg-s" x="722" y="122">a damaged file) starts a fresh match.</text>
+        <rect class="dg-box" x="710" y="142" width="270" height="108" rx="8"/>
+        <text class="dg-t" x="722" y="164">When it is written</text>
+        <text class="dg-s" x="722" y="184">After every action, after each new deal</text>
+        <text class="dg-s" x="722" y="199">and when the table closes. Written to</text>
+        <text class="dg-s" x="722" y="214">callbreak.json.tmp, then renamed.</text>
+        <text class="dg-s" x="722" y="229">Deleted when the match ends (it goes to</text>
+        <text class="dg-s" x="722" y="244">Room history) or is abandoned.</text>
+      </svg>
+    </div>
+    <figcaption>Fields equal to their defaults (<code>"version": 1</code>, <code>"assisted": false</code>) are left out by kotlinx.serialization. The seed and the per-hand seeds come from <code>mixSeed(matchSeed, handNumber)</code>; the computer players use a separate seeded RNG, but their choices are logged like yours, so replay never re-runs the AI.</figcaption>
+  </figure>
+  <p>Covered by <code>app/src/test/.../ReplayTest.kt</code>: the action codec round-trips every action kind, replaying a logged match rebuilds an identical state, and saved rules round-trip. Android backup includes the settings, the database and the saved matches.</p>
+
+  <h3>Folder map</h3>
+<pre class="tree">Tashlark/
+├── <b>Tashlark.html</b>                    <span class="c-com">this guide (handoff block at the end)</span>
+├── README.md · docs/                <span class="c-com">overview; privacy policy, landing page, app-ads.txt for GitHub Pages</span>
+├── .github/workflows/android.yml    <span class="c-com">CI: tests, lint, debug APK, release APK + AAB</span>
+├── gradle/libs.versions.toml        <span class="c-com">every dependency version</span>
+├── engine/                          <span class="c-com">pure Kotlin, no Android</span>
+│   ├── src/main/kotlin/com/tashlark/engine/
+│   │   ├── Cards.kt                 <span class="c-com">Suit, Card, CardSet, Rng (SplitMix64), mixSeed</span>
+│   │   ├── Engine.kt                <span class="c-com">Action, Trick, Rules&lt;S&gt;, HandState, sampleHands</span>
+│   │   ├── Game.kt                  <span class="c-com">CardGame&lt;S,M&gt;, TableView, HandSummary, seat names</span>
+│   │   ├── Ai.kt                    <span class="c-com">Skill, Policy, MonteCarloAi</span>
+│   │   ├── callbreak/               <span class="c-com">CallBreak.kt (rules, policy, simulated bidding) · CallBreakGame.kt</span>
+│   │   ├── twentynine/              <span class="c-com">TwentyNine.kt · TwentyNineGame.kt</span>
+│   │   ├── courtpiece/              <span class="c-com">CourtPiece.kt · CourtPieceGame.kt</span>
+│   │   └── mendikot/                <span class="c-com">Mendikot.kt · MendikotGame.kt</span>
+│   └── src/test/kotlin/…            <span class="c-com">CallBreakTest (9), TwentyNineTest (15), CourtPieceTest (17), MendikotTest (14)</span>
+└── app/
+    ├── build.gradle.kts             <span class="c-com">ad ids, signing, release guard (REQUIRE_RELEASE_CONFIG)</span>
+    ├── schemas/                     <span class="c-com">Room schema export</span>
+    └── src/main/
+        ├── AndroidManifest.xml      <span class="c-com">INTERNET + network state, portrait, AdMob app id placeholder</span>
+        ├── assets/                  <span class="c-com">privacy.txt, licenses.txt (shown in-app)</span>
+        ├── res/font/                <span class="c-com">anek.ttf, tiro.ttf</span>
+        └── java/com/tashlark/app/
+            ├── TashlarkApplication.kt   <span class="c-com">AppContainer (manual DI)</span>
+            ├── MainActivity.kt          <span class="c-com">splash, edge-to-edge, theme, consent + billing on start</span>
+            ├── ads/                     <span class="c-com">AdsManager (gates, consent, rewarded), AdBanner</span>
+            ├── billing/                 <span class="c-com">BillingManager (remove_ads)</span>
+            ├── data/                    <span class="c-com">Settings (DataStore + HouseRules), Persistence (codec, MatchStore, Room),</span>
+            │                            <span class="c-com">GameCatalog, StatsMath</span>
+            └── ui/
+                ├── AppNav.kt · WelcomeScreen.kt
+                ├── table/               <span class="c-com">TableScreen, TableParts, TableViewModel</span>
+                ├── home/ · stats/ · settings/   <span class="c-com">Home; Stats; Settings, DocumentScreen</span>
+                ├── cards/CardArt.kt     <span class="c-com">faces, backs, suit paths, all drawn on Canvas</span>
+                ├── components/          <span class="c-com">Widgets (buttons, rows, Haptics), Icons</span>
+                └── theme/               <span class="c-com">Theme.kt (Kora &amp; Neel tokens), Type.kt (Anek, Tiro)</span></pre>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="chapter" id="engine">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-h" fill="currentColor"/></svg>06 · Inside the engine</p>
+  <h2 class="h">Engine deep-dive</h2>
+  <p class="lede">Everything in <code>engine/</code> is deterministic, immutable and fast enough to simulate thousands of hands per second on a phone. The four games share one card model, one random-number generator, one hand sampler and one Monte-Carlo player; each game supplies its own state, rules, scoring and a fast heuristic policy.</p>
+
+  <h3>The shared core</h3>
+  <dl class="defs">
+    <dt><code>Card</code></dt><dd>A value class holding one <code>Int</code>: <code>suit × 13 + (rank − 2)</code>, ranks 2 to 14 (ace). Spades are 0–12, hearts 13–25, diamonds 26–38, clubs 39–51. No object is allocated in the AI's hot loops, and the code is what the save file stores. <code>spoken</code> gives "queen of hearts" for TalkBack.</dd>
+    <dt><code>CardSet</code></dt><dd>A set of cards as a 52-bit <code>Long</code> mask. Size is one <code>bitCount</code>, membership one AND, "cards of a suit" one mask. <code>FULL</code> is the 52-card deck, <code>PIQUET</code> the 32-card deck for 29 (7 to ace).</dd>
+    <dt><code>Rng</code></dt><dd>SplitMix64: the same seed gives the same numbers on every phone and on the build server. <code>nextInt</code> uses rejection sampling (no modulo bias), <code>shuffle</code> is Fisher–Yates, <code>fork()</code> splits off an independent stream. <code>mixSeed(match seed, hand number)</code> gives each deal its own seed.</dd>
+    <dt><code>sampleHands</code></dt><dd>Deals the unseen cards to the other seats with the right counts while honouring every known void (a seat that failed to follow a suit cannot hold it). It places the most constrained cards first, prefers seats with the most room, retries up to 60 shuffles, and only as a last resort ignores voids (contradictory constraints should never happen).</dd>
+    <dt><code>MonteCarloAi</code></dt><dd>For each sampled world and each legal action, apply the action and play to the end of the hand with the game's <code>Policy</code>; pick the action with the highest total <code>utility</code> for the seat. After at least 8 worlds it stops if 900 ms have passed.</dd>
+  </dl>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Skill</th><th class="num">Worlds per decision</th><th>How it plays</th></tr></thead>
+      <tbody>
+        <tr><td>Easy</td><td class="num">0</td><td>The game's heuristic policy only: sensible habits, no look-ahead. Beatable, never silly. Call Break bids by hand count.</td></tr>
+        <tr class="pick"><td>Medium (default)</td><td class="num">24</td><td>Monte-Carlo search. Call Break bids from 40 simulated deals.</td></tr>
+        <tr><td>Hard</td><td class="num">72</td><td>More worlds, closer percentage play. Call Break bids from 120 simulated deals.</td></tr>
+      </tbody>
+      <caption>From <code>Skill</code> in <code>Ai.kt</code> and <code>CallBreakGame.aiSpecial</code>. Hints always use Medium for your seat, then explain the move in plain words; a match where you used a hint is recorded as "assisted".</caption>
+    </table>
+  </div>
+
+  <div class="note good"><p><strong>Provably fair deals.</strong> A match's cards depend only on its seed and the hand number. The app cannot "decide" to give the computer better cards mid-match, and the same seed and actions always rebuild the same match, which is exactly how saving works.</p></div>
+
+  <!-- ---------------- Call Break ---------------- -->
+  <h3>Call Break <small>· <code>engine/…/callbreak/</code></small></h3>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th>State</th><td><code>CallBreakState</code>: four hands, dealer, bids (null until made), completed tricks, the current trick, tricks won per seat, cards played, known voids, config. Scores are kept in tenths (3.2 is stored as 32) so arithmetic stays exact.</td></tr>
+        <tr><th>Flow</th><td>Bidding goes round once from the player after the dealer: each seat bids 1 to the maximum (no passing). Then 13 tricks; the first is led by the player after the dealer, each later one by the previous winner.</td></tr>
+        <tr><th>Legal plays</th><td>Leading: anything. Holding the led suit: follow; with <em>must beat</em> on, only cards higher than the current winner, unless a spade has already trumped the trick (then any card of the suit). Void: must play a spade; if a spade is winning, only higher spades; if you can't overtrump, any card. No spades: any card.</td></tr>
+        <tr><th>Scoring</th><td>Made: bid × 10 + overtricks (tenths). Failed: −bid × 10. After the set number of rounds the highest total wins; ties share the win.</td></tr>
+        <tr><th>Variants</th><td>Settings: must beat when following (on), highest bid 13 or 8, rounds 5 or 10. Engine only (fixed on): must trump when void, must overtrump, redeal any hand without a spade.</td></tr>
+        <tr><th>Determinization</th><td>Unseen = all 52 minus played minus own hand, dealt to the other seats at their current sizes, honouring voids.</td></tr>
+        <tr><th>AI</th><td><strong>Bidding by simulation</strong> (<code>callBreakSimulatedBid</code>): sample deals, give the others a bid from their hand count, play each deal out, build the distribution of tricks this seat takes, pick the bid with the best expected score, then average with the hand count and round down (a failed bid costs the whole bid). The hand count: aces, guarded kings, queens in 3–4 card suits, short side suits when holding 3+ spades, top spades, and 0.85 for each spade beyond three. <strong>Play policy:</strong> still needing tricks, lead a master card (side suits first) or win as cheaply as is safe; once the bid is made, play low and stay out of the way.</td></tr>
+        <tr><th>Tests (9)</th><td>Scoring matches common rules; must follow and must beat; following after a trump need not beat; void must trump and overtrump; spades led must beat the highest spade; trick winner; 2,000 random deals conserve cards and stay legal; determinize keeps the viewer's hand and respects voids; Medium AI outscores random players over 30 deals.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ---------------- 29 ---------------- -->
+  <h3>29 <small>· <code>engine/…/twentynine/</code></small></h3>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th>State</th><td><code>TwentyNineState</code>: hands, dealer, the 16 undealt cards (<code>stock</code>), auction fields (turn, high bid and bidder, each seat's last bid, who passed), declarer, bid and current <em>target</em>, the face-down <code>indicator</code> (kept out of the declarer's hand until revealed), trump, reveal bookkeeping (who, which trick, forced or not, who must now trump), doubling stage and multiplier, tricks and their winners, card points per team, voids, and the seat that showed a pair. The phase is derived from these fields: bidding → trump → doubling → play → over.</td></tr>
+        <tr><th>Flow</th><td>Four cards each. Auction from the player after the dealer: pass or bid above the current high (16 to 28, or 29 with the last-trick point); a pass is final; after three passes the auction ends, and if nobody had bid the last player must bid 16. The declarer sets one of their four cards face down as trump. Doubling (if on): the defender after the declarer, then the other defender, may double; if doubled the declarer may redouble. Then the stock is dealt, four more each.</td></tr>
+        <tr><th>Legal plays</th><td>Follow suit if able. Before the reveal the declarer may not lead a trump while holding any other suit. A player void in the led suit may <code>CallReveal</code> instead of playing: the indicator joins the declarer's hand, trump becomes active, and the asker must then play a trump if they hold one. Trump counts for the trick already in progress (the winner is judged when the trick completes). A declarer left with only the indicator must reveal.</td></tr>
+        <tr><th>Scoring</th><td>Card points J 3, 9 2, A 1, 10 1 (28), plus 1 for the last trick if enabled. <strong>Pair:</strong> after each trick once trump is shown, if the trick winner or their partner holds king and queen of trump, the target moves −4 (bidders) or +4 (defenders), clamped to 16..max, once per hand. Bidders reaching the target: +1 game point × multiplier (1, 2 or 4); otherwise −1 × multiplier. Defenders' totals never change. A hand where trump was never revealed by choice is <em>annulled</em>: no score, same dealer, next seed. Match: first team to +6 wins, a team at −6 loses.</td></tr>
+        <tr><th>Variants</th><td>Settings: pair (on), double and redouble (on), last-trick point (off). Engine only: declarer can't lead trump before the reveal (on), must trump after asking (on), match target 6.</td></tr>
+        <tr><th>Determinization</th><td>The declarer knows the indicator; everyone knows it after the reveal (and, if unplayed, it stays pinned in the declarer's hand). For anyone else before the reveal, a fresh indicator is drawn from the unseen cards (exempt from the declarer's voids) and trump becomes its suit. While the stock is undealt, the stock is re-shuffled too. A player who asked for trump and then didn't trump is recorded as void in trump.</td></tr>
+        <tr><th>AI</th><td>Bidding and trump choice use the policy at every skill (<code>aiSpecial</code>); doubling and card play use the Monte-Carlo search at Medium and Hard. <strong>Bid estimate</strong> from four cards: 10 + 2.5 per jack + 2 per nine with its jack (1 without) + 1 per ace + 0.5 per ten + 1.5 per extra card in the longest suit; bid the minimum legal amount if it does not exceed the estimate (2 lower if the partner already leads the auction), otherwise pass. <strong>Trump:</strong> the suit with the best length-and-points score, hiding its lowest card. <strong>Doubling:</strong> with two or more jacks. <strong>Play:</strong> lead masters that carry points; ask for trump when void and the other side is winning points; feed points to a partner who is surely winning; otherwise win cheaply or throw the least valuable card.</td></tr>
+        <tr><th>Tests (15)</th><td>Strength order and 28-point total; 4 + 16 deal; bidding legality and auction end; trump and doubling flow; declarer can't lead trump before the reveal; reveal only when void, and must trump after asking; declarer reveal and the indicator; reveal makes trump count for cards already in the trick; pair moves the target both ways and clamps; never-revealed hands are annulled; scoring with double and redouble; full hands conserve cards and stay legal; determinize hides the indicator and respects voids; a full match reaches six; Medium AI beats random play.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ---------------- Court Piece ---------------- -->
+  <h3>Court Piece <small>· <code>engine/…/courtpiece/</code></small></h3>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th>State</th><td><code>CourtPieceState</code>: hands (five each while trump is chosen), the eight cards each seat will receive afterwards (<code>stock</code>, unknown to everyone), dealer, trump, tricks, tricks per team, the double-sir pile and streak seat, cards played, voids, config, and how many weak-caller redeals happened.</td></tr>
+        <tr><th>Flow</th><td>The caller (player after the dealer) names a suit with <code>SetTrump(null, suit)</code>; no card is shown. Everyone then gets their eight more cards and the caller leads. If the caller's five are all below a jack, the same dealer redeals from the next shuffle of the same seeded stream, so replays stay identical.</td></tr>
+        <tr><th>Legal plays</th><td>Follow suit if able, otherwise any card. There is no obligation to trump.</td></tr>
+        <tr><th>Scoring</th><td>Single sir (default): the hand ends when a team has 7 tricks. Callers win 1, or 3 for a court (7–0); opponents win 2, or 4 for a goon court. Next dealer: dealer's team won → the deal passes on; callers won → same dealer; callers' court → dealer's partner. First to the target (10) wins the match.</td></tr>
+        <tr><th>Variants</th><td>Settings: points to win (5, 10, 15, 20). Engine only, not yet in Settings: <strong>double sir</strong>, where won tricks pile up and a team collects the pile only when the same player wins two tricks in a row (the first collection needs at least three tricks; the last trick takes what is left; all 13 are played, 7 collected wins), and the weak-caller redeal switch. <span class="chip plan">Planned</span> to expose double sir.</td></tr>
+        <tr><th>Determinization</th><td>During the trump call, everything except the viewer's five cards is re-dealt, including the viewer's own future eight (nobody knows them yet). During play, the unseen cards are dealt honouring voids.</td></tr>
+        <tr><th>AI</th><td><strong>Trump:</strong> for each suit, 10 per card plus ace 6, king 4, queen 2, jack 1; the best suit is named. <strong>Play:</strong> attackers with three or more trumps draw trumps with a master trump; otherwise lead side-suit masters unless an opponent is known to be void there and may still hold trumps; else lead low from the longest side suit. When following, don't overtake a partner who is safely winning; take the trick with the cheapest card that no later opponent can beat; second hand plays low unless defending against a court; discard the lowest non-master card from the shortest side suit.</td></tr>
+        <tr><th>Tests (17)</th><td>Five-then-thirteen deal and caller leads; table prompts a human caller; weak caller redealt from the same stream; must follow but need not trump; trick winner with and without trump; hand ends at seven; scoring table; caller's court and goon court by play; dealer rotation; many full hands legal and conserving cards; determinize respects voids and conserves cards; a full match reaches the target; deals are deterministic from the match seed; AI team beats a random team; double-sir collection rules; double sir plays all thirteen and scores.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ---------------- Mendikot ---------------- -->
+  <h3>Mendikot <small>· <code>engine/…/mendikot/</code></small></h3>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th>State</th><td><code>MendikotState</code>: hands, dealer, the face-down <code>trumpCard</code> (band hukum), trump suit, whether it is active, <code>trumpFrom</code> (in the current trick, trump-suit cards before this index don't count as trump), the seat that just asked for the reveal, tricks and their winners, played cards, voids and config. The <em>setter</em> (player after the dealer) leads the first trick in both modes.</td></tr>
+        <tr><th>Flow</th><td>Band hukum: the setter chooses any of their 13 cards to lay face down and plays from the other twelve. Cut hukum: no trump phase. Then 13 tricks.</td></tr>
+        <tr><th>Legal plays</th><td>Follow suit if able, otherwise any card. Band hukum: a void player may <code>CallReveal</code>; the hidden card returns to the setter, trump becomes active with <code>trumpFrom</code> set to the current position, and the asker must play a trump if they hold one. A setter whose only card is the hidden one must reveal. Cut hukum: the first card played by a void player names trump, counting from that card onwards.</td></tr>
+        <tr><th>Scoring</th><td>Three or four tens wins; at two each, seven or more tricks wins. With bonuses: win 1, mendikot (all four tens) 2, whitewash (all 13 tricks) 3; without, every win is 1. Next dealer (as on pagat.com): dealer's team won → next player; dealer's team whitewashed → dealer's partner; otherwise the same dealer. First to the target (5) wins.</td></tr>
+        <tr><th>Variants</th><td>Settings: hidden trump (band) or cut trump, bonus scoring (on), points to win (3, 5, 7).</td></tr>
+        <tr><th>Determinization</th><td>For anyone but the setter before the reveal, the hidden card is unknown: the sampler deals one extra card into an empty slot of the viewer's own (with no void restrictions) so it is consistent with everyone else's voids, and trump becomes its suit. After the reveal the card is public and, if unplayed, pinned to the setter's hand.</td></tr>
+        <tr><th>AI</th><td><strong>Trump choice:</strong> the longest suit (ties: the stronger), hiding its lowest card that isn't a ten. <strong>Lead:</strong> masters in side suits whose ten is still out (to flush the tens), then aces, otherwise low from the longest side suit; never an unprotected ten. <strong>Follow:</strong> ask for trump when void and a ten is on an opponent-won trick; in cut hukum, a void player picks the suit to make trump; drop a ten on a trick the partner is sure to win; win tens cheaply and safely; otherwise discard low from the shortest suit, keeping tens, trumps and honours.</td></tr>
+        <tr><th>Tests (14)</th><td>13-card deal and the setter hides one; cut hukum has no trump phase; reveal only when void and unrevealed; must play trump after asking; earlier trump-suit cards in the same trick don't count; a setter with only the indicator must reveal; cut hukum's first void card sets trump; hand result and scoring; dealer rotation; random hands conserve cards and stay legal; determinize respects voids and conserves cards; <strong>determinize does not leak the hidden indicator</strong>; a full match reaches the target; AI team beats a random team.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Test status</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Suite</th><th class="num">Tests</th><th>Last local run</th></tr></thead>
+      <tbody>
+        <tr><td><code>CallBreakTest</code></td><td class="num">9</td><td rowspan="6">15 Oct 2026, 21:13 IST, after all review fixes: 67 of 67 passed, 0 failures; lint 0 errors; debug and release (R8, 4.5 MB) APKs built. <span class="chip built">Built</span> Code may have changed since; CI re-runs everything on each push.</td></tr>
+        <tr><td><code>TwentyNineTest</code></td><td class="num">15</td></tr>
+        <tr><td><code>CourtPieceTest</code></td><td class="num">17</td></tr>
+        <tr><td><code>MendikotTest</code></td><td class="num">14</td></tr>
+        <tr><td><code>ReplayTest</code> (app)</td><td class="num">3</td></tr>
+        <tr><td><code>StatsMathTest</code> (app)</td><td class="num">9</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num"><strong>67</strong></td><td>55 engine + 12 app</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="fine">The engine's Gradle test task also forwards <code>-Psamples</code> and <code>-Pstats</code> as system properties (copied from Gridlark's setup), but no Tashlark test reads them yet.</p>
+</section>
+
+<!-- ============================================================ 14 -->
+<section class="chapter" id="design">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-h" fill="currentColor"/></svg>07 · How it looks and feels</p>
+  <h2>Design system: kora &amp; neel</h2>
+  <p class="lede">Card apps in this category look alike: green felt, gold gradients, glossy chips, loud casino sounds. Tashlark goes the other way: undyed khadi cloth by day, indigo at night, block-print restraint, and cards drawn to be read on a 720p phone.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Token</th><th>Light</th><th>Dark</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr><td>table</td><td><code>#D8CCB4</code></td><td><code>#18213A</code></td><td>The cloth everything sits on</td></tr>
+        <tr><td>panel</td><td><code>#F6F0E4</code></td><td><code>#222C47</code></td><td>Sheets, dialogs, bid strip</td></tr>
+        <tr><td>card face</td><td><code>#FBF7EE</code></td><td><code>#EEE7D8</code></td><td>Faces stay paper in both themes</td></tr>
+        <tr><td>card back</td><td><code>#2B3A67</code> + <code>#A63A2B</code></td><td>same</td><td>Indigo with a madder ganjifa medallion</td></tr>
+        <tr><td>haldi</td><td><code>#D99A1E</code></td><td><code>#E8AE3A</code></td><td>Turn ring, selection, trump badge</td></tr>
+        <tr><td>madder</td><td><code>#A63A2B</code></td><td><code>#D2604C</code></td><td>Primary buttons, problems</td></tr>
+        <tr><td>neem</td><td><code>#3F6B4E</code></td><td><code>#7FB08F</code></td><td>Your partner, good outcomes, hints</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Cards</h3>
+  <ul>
+    <li><strong>Drawn in code</strong> (<code>ui/cards/CardArt.kt</code>): suit shapes are vector paths, not emoji or font glyphs, so they are crisp everywhere. One large centre pip on number cards; court cards sit in a round frame with Tiro letters; a condensed Anek index in each corner.</li>
+    <li><strong>Two- or four-colour deck</strong> (Settings): four-colour makes diamonds blue and clubs green, which helps colour-blind players and small screens.</li>
+    <li><strong>Two-row hand</strong>: when 13 cards can't each show a 44 dp sliver in one row, the hand splits at a suit boundary into two rows, the back row raised so every index stays visible and tappable. Playable cards lift 8 dp on your turn; others dim; the selected card lifts 20 dp with a haldi edge.</li>
+    <li><strong>Two taps to play</strong> by default (select, then confirm), so a slip never plays a card. "One-tap play" is a setting.</li>
+    <li>Text layouts for card corners are measured once per card size and shared, so a full hand redraws cheaply on low-end phones.</li>
+  </ul>
+  <h3>Motion, feedback and accessibility</h3>
+  <ul>
+    <li>Played cards travel from the player's side in 260 ms on an emphasised curve; a finished trick is held, the winning card outlined, then gathered towards the winner. Reduce motion swaps travel for quick fades but keeps the pauses you need to read the trick.</li>
+    <li>Computer players think <em>during</em> a natural pause (about half a second for a card, about a second for a bid; Relaxed / Normal / Fast speed), so slow phones don't add extra waiting.</li>
+    <li>Haptics use Android's semantic constants: a tick when a card lands, confirm when your side takes a trick, reject for an illegal tap. There are no sounds or music at all.</li>
+    <li>TalkBack reads every card ("queen of hearts, playable"), names who played each table card, and announces prompts and rule problems ("You must follow ♥"). Touch targets are at least 48 dp; layouts survive 200% font size; a Large card size is in Settings.</li>
+    <li>Fonts: <strong>Anek</strong> for UI and indices and <strong>Tiro Devanagari Hindi</strong> for titles, both SIL Open Font License, bundled for offline use and ready for Hindi, Nepali and Bengali text later.</li>
+  </ul>
+  <h3>What we deliberately avoided</h3>
+  <p>No felt, chips, coins, gold gradients, jackpots or "bet" wording (also keeps the 3+ rating). No emoji, no glassmorphism, no stock icon set (icons are hand-drawn 24 dp line icons). No ads on the table. No timers on your turn.</p>
+</section>
+
+<section class="chapter" id="build">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-s" fill="currentColor"/></svg>08 · Without Android Studio</p>
+  <h2>Build and test with GitHub Actions</h2>
+  <p class="lede">Every push builds the app on GitHub's servers, runs all tests and lint, and gives you an APK to install on your phone.</p>
+  <ol>
+    <li>Create an empty repository on github.com (for example <code>tashlark</code>), with no README.</li>
+    <li>In Git Bash. The Tashlark folder needs its own repository because your home folder is already one:
+<pre>cd ~/Desktop/Dev/Tashlark
+git init -b main        # skip if already done
+git add -A
+git commit -m "Tashlark"
+git remote add origin https://github.com/YOUR_NAME/tashlark.git
+git push -u origin main</pre></li>
+    <li>Open the repository's <strong>Actions</strong> tab. The "Android build" workflow (<code>.github/workflows/android.yml</code>) takes about 10–15 minutes the first time.</li>
+    <li>Open the finished run and download the artifact <strong>tashlark-debug-apk</strong>. Unzip it on your phone and open the <code>.apk</code>. Allow "install unknown apps" for your file manager or browser when asked.</li>
+    <li>The debug app is called Tashlark too but installs as <code>com.tashlark.app.debug</code>, so it can sit next to the store version later. It always shows Google's test ads.</li>
+  </ol>
+  <p>Pushes to <code>main</code> also produce <strong>tashlark-release</strong> (release APK, Play bundle <code>.aab</code> and R8 mapping). Without a keystore secret it is signed with a throwaway debug key: fine for testing, not for Play. A <strong>reports</strong> artifact holds test and lint reports if anything fails.</p>
+  <p class="fine">Locally on this PC: <code>~/.android-toolchain/g.sh :engine:test :app:assembleDebug</code> (Java here can't reach services.gradle.org, so the local Gradle is used instead of <code>./gradlew</code>). Run one build at a time; the PC is short on RAM.</p>
+</section>
+
+<section class="chapter" id="live">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-d" fill="currentColor"/></svg>09 · From APK to Play Store</p>
+  <h2>Going live (India)</h2>
+  <ol>
+    <li><strong>Play Console account</strong>: one-time US$25 fee; complete developer identity verification. New personal accounts must run a closed test with at least 12 testers for 14 days before production <span class="chip est">Verify in Play Console</span>.</li>
+    <li><strong>Release keystore</strong> (keep it and its passwords forever; you can't update the app without it):
+<pre>keytool -genkeypair -v -keystore release.jks -alias tashlark -keyalg RSA -keysize 4096 -validity 10000
+# Base64 for GitHub (PowerShell):
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("release.jks")) | Set-Clipboard</pre>
+      Add repository secrets: <code>KEYSTORE_BASE64</code>, <code>KEYSTORE_PASSWORD</code>, <code>KEY_ALIAS</code>, <code>KEY_PASSWORD</code>.</li>
+    <li><strong>AdMob</strong>: create the app and three ad units (banner, interstitial, rewarded). Add secrets <code>ADMOB_APP_ID</code>, <code>ADMOB_BANNER_ID</code>, <code>ADMOB_INTERSTITIAL_ID</code>, <code>ADMOB_REWARDED_ID</code>. In AdMob's blocking controls, <strong>block gambling and betting categories</strong>: the app limits ads to the PG rating, but category blocking is a console setting. Publish <code>app-ads.txt</code> on your developer website (a <code>USERNAME.github.io</code> site works; template in <code>docs/app-ads.txt</code>).</li>
+    <li><strong>Remove ads</strong>: in Play Console create a one-time product with id <code>remove_ads</code> (suggested ₹149 / US$2.99).</li>
+    <li><strong>Privacy policy</strong>: publish <code>docs/privacy.md</code> (GitHub Pages), set secrets <code>PRIVACY_POLICY_URL</code> and <code>SUPPORT_EMAIL</code> (the in-app policy shows that address).</li>
+    <li><strong>Content rating (IARC)</strong>: answer "no" to gambling, simulated gambling and real-money items. Target audience 13+ (not Families). Ads: yes.</li>
+    <li><strong>Data safety</strong>: declare the AdMob SDK's collection (device or other IDs, approximate location from IP, app interactions, diagnostics; shared with Google for advertising). No data collected by you.</li>
+    <li><strong>Payments</strong>: payments profile with your PAN (lower withholding tax) and bank account for both Play and AdMob.</li>
+    <li><strong>Store bundle</strong>: push a tag such as <code>git tag v1.0.0 &amp;&amp; git push --tags</code>. On tags the build <em>refuses to run</em> unless the real AdMob IDs, keystore and support email are set, so a test-ads or debug-signed bundle can never reach the store. Upload the <code>.aab</code> from the <strong>tashlark-release</strong> artifact. Version code is the GitHub run number, so it always increases.</li>
+  </ol>
+</section>
+
+<section class="chapter" id="listing">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-c" fill="currentColor"/></svg>10 · Words for the store</p>
+  <h2>Store listing kit</h2>
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><th>Title (≤30)</th><td>Callbreak, 29 &amp; Court Piece</td></tr>
+        <tr><th>Short (≤80)</th><td>Call Break, 29, Court Piece &amp; Mendikot offline. Fair bots, your house rules.</td></tr>
+        <tr><th>Keywords to use naturally</th><td>callbreak, call break offline, 29 card game, twenty nine, court piece, rang, coat piece, mendikot, mindi, card game offline</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Full description</h3>
+  <p>Play the card games you grew up with, any time, even with no internet. Tashlark brings Call Break, 29, Court Piece (Rang) and Mendikot (Mindi) to one calm, beautifully simple app.</p>
+  <p><strong>Fair computer players.</strong> They only know what a real player at the table would know: their own cards and what has been played. They never peek at your hand. Choose Easy, Medium or Hard.</p>
+  <p><strong>Your house rules.</strong> Must you beat the best card in Call Break? Highest bid 8 or 13? Pair and double in 29? Hidden trump (band hukum) or cut trump in Mendikot? Points to win in Court Piece? Set them once in Settings.</p>
+  <p><strong>Made for every phone.</strong> Small download, quick on budget phones, large-card mode, four-colour deck, dark mode and full TalkBack support. Your match is saved after every move: close the app and continue later exactly where you were.</p>
+  <p><strong>No chips, no betting, no account.</strong> Just cards. Ads appear only between matches, never while you play, and you can remove them with one purchase.</p>
+  <h3>Screenshot captions</h3>
+  <ol>
+    <li>Call Break, 29, Court Piece &amp; Mendikot in one app</li>
+    <li>Plays fully offline</li>
+    <li>Computer players that never see your cards</li>
+    <li>Your house rules, your way</li>
+    <li>Big, clear cards. Four-colour deck option</li>
+    <li>Pick up exactly where you left off</li>
+    <li>No ads while you play</li>
+    <li>Calm design, day and night</li>
+  </ol>
+  <h3>Regional titles <span class="chip est">Needs a native speaker's check</span></h3>
+  <ul>
+    <li>Hindi: कॉल ब्रेक, 29 और कोर्ट पीस — ऑफ़लाइन ताश</li>
+    <li>Nepali: कल ब्रेक, २९ र कोर्ट पिस — अफलाइन तास</li>
+    <li>Bengali: কল ব্রেক, ২৯ ও কোর্ট পিস — অফলাইন তাস</li>
+  </ul>
+  <h3>Launch marketing</h3>
+  <p>Short videos of a clever trick or a Mendikot whitewash; posts in Nepali and Bengali card-game communities and family WhatsApp groups; Diwali, Dashain and Durga Puja (peak card-playing season) pushes; cross-promotion from Gridlark's settings screen once both are live.</p>
+</section>
+
+<section class="chapter" id="roadmap">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-h" fill="currentColor"/></svg>11 · After launch</p>
+  <h2>Roadmap</h2>
+  <ul>
+    <li><span class="chip plan">Planned</span> Optional sound pack (real cards on cloth, off by default, never over the user's music).</li>
+    <li><span class="chip plan">Planned</span> Expose more variants already in the engine: Court Piece double sir, weak-caller redeal; add Call Break "8-bid wins", 29 single hand and seventh-card trump.</li>
+    <li><span class="chip plan">Planned</span> Hindi, Nepali, Bengali and Urdu UI (fonts already support them).</li>
+    <li><span class="chip plan">Planned</span> Pass-and-play and Bluetooth/nearby play with friends.</li>
+    <li><span class="chip plan">Planned</span> Daily deal: everyone gets the same seeded hand each day, with a streak.</li>
+    <li><span class="chip plan">Planned</span> AdMob mediation (InMobi, AppLovin, Meta) for better Indian fill; A/B test the round-break interstitial gap.</li>
+    <li><span class="chip plan">Planned</span> Baseline profiles and a Macrobenchmark frame-time gate on a 3 GB phone.</li>
+    <li><span class="chip plan">Planned</span> More trick-takers without gambling: Spades, Hearts.</li>
+  </ul>
+</section>
+
+<section class="chapter" id="risks">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-s" fill="currentColor"/></svg>12 · What could go wrong</p>
+  <h2>Risks and mitigations</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Low ad revenue per user in India; players switch off data to avoid ads</td><td>Respectful ad rules keep ratings high (ranking), banner on calm screens, diaspora users earn more; remove-ads purchase as a second income.</td></tr>
+        <tr><td>"Rigged bots" reviews</td><td>AI never reads hidden cards (resampled worlds only); Easy/Medium/Hard; seeded, replayable deals. Consider adding "show all hands after the round".</td></tr>
+        <tr><td>Rule disputes between regions</td><td>Defaults follow the most common app rules (pagat.com checked); house-rule toggles; rules sheet in every game.</td></tr>
+        <tr><td>Gambling classification</td><td>No chips, coins, bets or casino games; PG ad rating; block gambling ad categories in AdMob.</td></tr>
+        <tr><td>Untested on a real device yet</td><td>Install the CI debug APK on 2–3 phones (one budget phone) before the closed test; Play's pre-launch report adds more devices.</td></tr>
+        <tr><td>Landscape and tablets (Android 16 ignores the portrait lock on large screens)</td><td>The table layout is relative and was built to stretch; check it on a tablet or foldable in the closed test.</td></tr>
+        <tr><td>Losing the release keystore</td><td>Back it up in two places; enable Play App Signing.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="chapter" id="sources">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-d" fill="currentColor"/></svg>13 · Where the facts came from</p>
+  <h2>Sources</h2>
+  <ul class="fine">
+    <li>Play listings: <a href="https://play.google.com/store/apps/details?id=io.teslatech.callbreak">Callbreak.com (Teslatech)</a>, <a href="https://play.google.com/store/apps/details?id=com.callbreak.hippo">Callbreak Master (Hippo Lab)</a>, <a href="https://play.google.com/store/apps/details?id=com.zlevelapps.cardgame29">29 (Z Level Labs)</a>, <a href="https://play.google.com/store/apps/details?id=com.BS_Pias.twentynine">29 (Knight's Cave)</a>, <a href="https://play.google.com/store/apps/details?id=com.artoon.courtpieceoffline">Court Piece (Artoon)</a>, <a href="https://play.google.com/store/apps/details?id=com.thp.mendicot">Mendicot (Tilted Head)</a>, <a href="https://play.google.com/store/apps/details?id=io.yarsa.games.cardgame">Yarsa 12-in-1</a></li>
+    <li>Rules: <a href="https://www.pagat.com/auctionwhist/call_bridge.html">pagat Call Bridge</a>, <a href="https://www.pagat.com/jass/29.html">pagat Twenty-Nine</a>, <a href="https://pagat.com/whist/rang.html">pagat Rang / Court Piece</a>, <a href="https://pagat.com/pointtrk/mendikot.html">pagat Mendikot</a>, <a href="https://bhoos.games/blog/call-break-rules-how-to-play-callbreak/">Bhoos Call Break rules</a>, <a href="https://zlevellabs.com/29-card-game-rules/">Z Level Labs 29 rules</a>, <a href="https://www.cardzmania.com/CourtPiece">Cardzmania Court Piece</a>, <a href="https://catsatcards.com/Games/Mendikot.html">catsatcards Mendikot</a></li>
+    <li>Policy and law: <a href="https://support.google.com/googleplay/android-developer/answer/9893335">Google Play Families policy</a>, <a href="https://support.google.com/googleplay/android-developer/answer/9877032">Google Play gambling policy</a>, <a href="https://www.khaitanco.com/sites/default/files/2026-04/29%20April%202026_ERGO_Online%20Gaming%20Rules_2026.pdf">Online Gaming Rules 2026 (Khaitan ERGO)</a></li>
+    <li>Monetisation benchmarks: <a href="https://blog.playio.co/mobile-game-ecpm-benchmarks-2026">playio eCPM benchmarks 2026</a>, <a href="https://blog.playio.co/arpdau-benchmarks-mobile-games">playio ARPDAU benchmarks</a>, <a href="https://gamedevreports.substack.com/p/gameanalytics-mobile-gaming-benchmarks">GameAnalytics benchmarks</a></li>
+    <li>Design: <a href="https://blakecrosley.com/guides/design/balatro">Balatro feel study</a>, <a href="https://handicrafts.nic.in/crafts/All_Crafts/Craft_Categories/Textile/Hand_Block_Printing/Kutch_Ajrakh/KutchAjrakhwebpage.html">Ajrakh block printing</a>, <a href="https://blogs.ashmolean.org/easternart/2017/11/02/persian-and-indian-playing-cards/">Indian ganjifa cards</a>, <a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/hapticfeedback/HapticFeedbackType">HapticFeedbackType</a></li>
+  </ul>
+</section>
+
+<section class="chapter" id="s14">
+  <p class="eyebrow"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#s-c" fill="currentColor"/></svg>14 · For whoever works on this next</p>
+<!-- HANDOFF:START -->
+<section class="handoff" id="handoff">
+<h2>Context handoff</h2>
+<p><b>Last updated:</b> 2026-10-15 21:15 IST</p>
+<h3>Decision</h3>
+<p>App = <b>Tashlark</b>, an offline bundle of Indian trick-taking card games vs computer players: Call Break, 29, Court Piece, Mendikot. Chosen as the next best offline app for 2-year ad revenue after Gridlark (est. ~$17k per 100k installs, ~$170k per 1M): huge South Asian demand, very loyal card players, two of four keyword pools poorly served (Court Piece leader 3.6★, Mendikot leader stale since 2024). No chips/coins/betting so it stays rated 3+ (no "simulated gambling").</p>
+<h3>State</h3>
+<ul>
+  <li>Research DONE: market validation (card bundle beats single game and Solitaire), exact rules spec for all four games, card-game UI/UX brief.</li>
+  <li>Engine DONE (<code>engine/</code>): shared card model, Rules/CardGame contracts, Monte-Carlo AI (never reads hidden cards); Call Break, 29, Court Piece, Mendikot with house-rule configs. 55 tests pass.</li>
+  <li>App DONE (<code>app/</code>): Welcome, Home (Continue + games), card table (two-row hand, bid strip, trump/double/reveal panels, animated tricks, hints, last trick, rules), round/match result, Settings with house rules, Stats, Privacy/Licences; replay-based saves; match history; AdMob + UMP (ads only between matches, banner on Home/Stats only, rewarded ad-free hour); remove-ads billing.</li>
+  <li>Independent review DONE: all 23 findings fixed (critical: double AI loop on fast taps; abandon, process-death resume, overwrite confirm, hint-before-deal crash, own bid shown, AI thinks during pause, bid strip, ordered saves, a11y, PG ad rating).</li>
+  <li>Local verification PASSED (15 Oct, 21:13 IST): 67/67 tests, lint 0 errors, debug + R8 release build (4.5 MB). NOT run on a phone or emulator yet (PC low on RAM): use the CI APK.</li>
+  <li>Docs DONE: this guide (14 chapters), README.md, docs/privacy.md, docs/app-ads.txt. Git: local repo, committed, not pushed.</li>
+</ul>
+<h3>Next</h3>
+<ol>
+  <li>Owner: push to a new GitHub repo, download <code>tashlark-debug-apk</code>, play each game on a real phone (ideally also a budget phone).</li>
+  <li>Owner: AdMob app + 3 units (block gambling categories), keystore, secrets, Play Console listing, closed test. Tag <code>v1.0.0</code> for the store bundle.</li>
+  <li>Later: roadmap items (sound pack, more variants in Settings, localisation, pass-and-play, daily deal).</li>
+</ol>
+<h3>How to resume</h3>
+<pre># Local build (Java on this PC cannot reach services.gradle.org, so use the local Gradle):
+~/.android-toolchain/g.sh :engine:test :app:testDebugUnitTest :app:assembleDebug
+# GitHub Actions uses ./gradlew normally: .github/workflows/android.yml
+# PC has little free RAM: run one Gradle build at a time; stop daemons after (g.sh --stop).</pre>
+</section>
+<!-- HANDOFF:END -->
+</section>
+
+</main>
+</div>
+
+<footer class="colophon">
+  <span>Tashlark build book · written 15 October 2026</span>
+  <span>Set in Tiro Devanagari Hindi and Anek (both SIL Open Font Licence), with system fallbacks</span>
+  <span>Light and dark follow your system setting</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  // Character counters for the listing kit (counts code points, roughly as Play does).
+  document.querySelectorAll('.count[data-for]').forEach(function (el) {
+    var src = document.getElementById(el.getAttribute('data-for'));
+    if (!src) return;
+    var n = Array.from(src.textContent).length;
+    var limit = parseInt(el.getAttribute('data-limit'), 10);
+    el.textContent = n.toLocaleString('en-US') + ' / ' + limit.toLocaleString('en-US');
+    if (n > limit) el.classList.add('over');
+  });
+
+  // Copy buttons (comments after " # " are dropped from the copied text).
+  document.querySelectorAll('.code .copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var text = pre.innerText.split('\n').map(function (l) { return l.replace(/\s+#\s.*$/, ''); }).join('\n').trim();
+      var done = function (msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { selectPre(pre); done('Selected'); });
+      } catch (e) { selectPre(pre); done('Selected'); }
+    });
+  });
+  function selectPre(pre) {
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  // Launch checklist, remembered in this browser only.
+  var KEY = 'tashlark-golive-v1';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#checklist input[type=checkbox]'));
+  var progress = document.getElementById('progress-text');
+  var bar = document.getElementById('progress-bar');
+  function refresh() {
+    var n = 0;
+    boxes.forEach(function (b) { b.closest('li').classList.toggle('done', b.checked); if (b.checked) n++; });
+    if (progress) progress.textContent = n + ' of ' + boxes.length + ' done';
+    if (bar) bar.style.width = (boxes.length ? (100 * n / boxes.length) : 0) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener('change', function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      refresh();
+    });
+  });
+  refresh();
+
+  // Highlight the current chapter in the index.
+  var links = {};
+  document.querySelectorAll('.index a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var map = { s14: 'handoff' };
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var id = map[e.target.id] || e.target.id;
+        Object.keys(links).forEach(function (k) { links[k].classList.toggle('active', k === id); });
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('section.chapter').forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

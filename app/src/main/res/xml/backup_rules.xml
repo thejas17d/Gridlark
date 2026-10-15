@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="database" path="." />
+    <include domain="file" path="datastore/settings.preferences_pb" />
+    <include domain="file" path="matches" />
+</full-backup-content>
